@@ -175,7 +175,6 @@
         .solution-cell {
             color: #e74c3c !important;
             font-weight: bold;
-            background: rgba(231, 76, 60, 0.1) !important;
         }
 
         /* Thick borders for box separation */
@@ -582,6 +581,7 @@
             let yPos = 20;
             
             currentPuzzles.forEach((puzzleData, index) => {
+                // Add puzzle page
                 if (index > 0) {
                     doc.addPage();
                     yPos = 20;
@@ -591,9 +591,9 @@
                 doc.text(`Puzzle ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`, 20, yPos);
                 yPos += 20;
                 
-                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
                 const cellSize = Math.min(120 / puzzleData.size, 15);
                 
+                // Draw puzzle
                 for (let row = 0; row < puzzleData.size; row++) {
                     for (let col = 0; col < puzzleData.size; col++) {
                         const x = 20 + col * cellSize;
@@ -601,16 +601,48 @@
                         
                         doc.rect(x, y, cellSize, cellSize);
                         
-                        const value = gridToUse[row][col];
+                        const value = puzzleData.puzzle[row][col];
                         if (value !== 0) {
+                            doc.setTextColor(0, 0, 0); // Black for original numbers
                             const displayValue = symbolType === 'numbers' ? value.toString() : String.fromCharCode(64 + value);
                             doc.text(displayValue, x + cellSize/2 - 2, y + cellSize/2 + 2);
                         }
                     }
                 }
+                
+                // Add solution page
+                doc.addPage();
+                yPos = 20;
+                
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Solution ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`, 20, yPos);
+                yPos += 20;
+                
+                // Draw solution
+                for (let row = 0; row < puzzleData.size; row++) {
+                    for (let col = 0; col < puzzleData.size; col++) {
+                        const x = 20 + col * cellSize;
+                        const y = yPos + row * cellSize;
+                        
+                        doc.rect(x, y, cellSize, cellSize);
+                        
+                        const puzzleValue = puzzleData.puzzle[row][col];
+                        const solutionValue = puzzleData.solution[row][col];
+                        const displayValue = symbolType === 'numbers' ? solutionValue.toString() : String.fromCharCode(64 + solutionValue);
+                        
+                        if (puzzleValue === 0) {
+                            doc.setTextColor(255, 0, 0); // Red for solution numbers
+                        } else {
+                            doc.setTextColor(0, 0, 0); // Black for original numbers
+                        }
+                        
+                        doc.text(displayValue, x + cellSize/2 - 2, y + cellSize/2 + 2);
+                    }
+                }
             });
             
-            doc.save('sudoku-puzzles.pdf');
+            doc.save('sudoku-puzzles-with-solutions.pdf');
         }
 
         function exportToExcel() {
@@ -618,32 +650,48 @@
             const wb = XLSX.utils.book_new();
             
             currentPuzzles.forEach((puzzleData, index) => {
-                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
-                const wsData = [];
+                // Create puzzle sheet
+                const puzzleWsData = [];
+                puzzleWsData.push([`Puzzle ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`]);
+                puzzleWsData.push([]);
                 
-                // Add title row
-                wsData.push([`Puzzle ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`]);
-                wsData.push([]);
-                
-                // Add grid data
+                // Add puzzle grid data
                 for (let row = 0; row < puzzleData.size; row++) {
                     const rowData = [];
                     for (let col = 0; col < puzzleData.size; col++) {
-                        const value = gridToUse[row][col];
+                        const value = puzzleData.puzzle[row][col];
                         if (value === 0) {
                             rowData.push('');
                         } else {
                             rowData.push(symbolType === 'numbers' ? value : String.fromCharCode(64 + value));
                         }
                     }
-                    wsData.push(rowData);
+                    puzzleWsData.push(rowData);
                 }
                 
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                XLSX.utils.book_append_sheet(wb, ws, `Puzzle ${index + 1}`);
+                const puzzleWs = XLSX.utils.aoa_to_sheet(puzzleWsData);
+                XLSX.utils.book_append_sheet(wb, puzzleWs, `Puzzle ${index + 1}`);
+                
+                // Create solution sheet
+                const solutionWsData = [];
+                solutionWsData.push([`Solution ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`]);
+                solutionWsData.push([]);
+                
+                // Add solution grid data
+                for (let row = 0; row < puzzleData.size; row++) {
+                    const rowData = [];
+                    for (let col = 0; col < puzzleData.size; col++) {
+                        const value = puzzleData.solution[row][col];
+                        rowData.push(symbolType === 'numbers' ? value : String.fromCharCode(64 + value));
+                    }
+                    solutionWsData.push(rowData);
+                }
+                
+                const solutionWs = XLSX.utils.aoa_to_sheet(solutionWsData);
+                XLSX.utils.book_append_sheet(wb, solutionWs, `Solution ${index + 1}`);
             });
             
-            XLSX.writeFile(wb, 'sudoku-puzzles.xlsx');
+            XLSX.writeFile(wb, 'sudoku-puzzles-with-solutions.xlsx');
         }
 
         function exportToSVG() {
@@ -655,48 +703,89 @@
                 const gridSize = size * cellSize;
                 const boxSize = getBoxSize(size);
                 
-                let svg = `<svg width="${gridSize}" height="${gridSize}" xmlns="http://www.w3.org/2000/svg">`;
-                svg += `<rect width="${gridSize}" height="${gridSize}" fill="white" stroke="#2c3e50" stroke-width="3"/>`;
+                // Export puzzle SVG
+                let puzzleSvg = `<svg width="${gridSize}" height="${gridSize}" xmlns="http://www.w3.org/2000/svg">`;
+                puzzleSvg += `<rect width="${gridSize}" height="${gridSize}" fill="white" stroke="#2c3e50" stroke-width="3"/>`;
                 
-                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
-                
-                // Draw grid lines and cells
+                // Draw grid lines
                 for (let row = 0; row <= size; row++) {
                     const y = row * cellSize;
                     const strokeWidth = (row % boxSize[0] === 0) ? 3 : 1;
-                    svg += `<line x1="0" y1="${y}" x2="${gridSize}" y2="${y}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
+                    puzzleSvg += `<line x1="0" y1="${y}" x2="${gridSize}" y2="${y}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
                 }
                 
                 for (let col = 0; col <= size; col++) {
                     const x = col * cellSize;
                     const strokeWidth = (col % boxSize[1] === 0) ? 3 : 1;
-                    svg += `<line x1="${x}" y1="0" x2="${x}" y2="${gridSize}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
+                    puzzleSvg += `<line x1="${x}" y1="0" x2="${x}" y2="${gridSize}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
                 }
                 
-                // Add numbers/letters
+                // Add puzzle numbers
                 for (let row = 0; row < size; row++) {
                     for (let col = 0; col < size; col++) {
-                        const value = gridToUse[row][col];
+                        const value = puzzleData.puzzle[row][col];
                         if (value !== 0) {
                             const x = col * cellSize + cellSize / 2;
                             const y = row * cellSize + cellSize / 2 + 5;
                             const displayValue = symbolType === 'numbers' ? value : String.fromCharCode(64 + value);
-                            const color = (puzzleData.puzzle[row][col] === 0 && showingSolutions) ? '#e74c3c' : '#2c3e50';
-                            svg += `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="${color}">${displayValue}</text>`;
+                            puzzleSvg += `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="#2c3e50">${displayValue}</text>`;
                         }
                     }
                 }
                 
-                svg += '</svg>';
+                puzzleSvg += '</svg>';
                 
-                // Download SVG
-                const blob = new Blob([svg], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `sudoku-puzzle-${index + 1}.svg`;
-                a.click();
-                URL.revokeObjectURL(url);
+                // Export solution SVG
+                let solutionSvg = `<svg width="${gridSize}" height="${gridSize}" xmlns="http://www.w3.org/2000/svg">`;
+                solutionSvg += `<rect width="${gridSize}" height="${gridSize}" fill="white" stroke="#2c3e50" stroke-width="3"/>`;
+                
+                // Draw grid lines
+                for (let row = 0; row <= size; row++) {
+                    const y = row * cellSize;
+                    const strokeWidth = (row % boxSize[0] === 0) ? 3 : 1;
+                    solutionSvg += `<line x1="0" y1="${y}" x2="${gridSize}" y2="${y}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
+                }
+                
+                for (let col = 0; col <= size; col++) {
+                    const x = col * cellSize;
+                    const strokeWidth = (col % boxSize[1] === 0) ? 3 : 1;
+                    solutionSvg += `<line x1="${x}" y1="0" x2="${x}" y2="${gridSize}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
+                }
+                
+                // Add solution numbers
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        const puzzleValue = puzzleData.puzzle[row][col];
+                        const solutionValue = puzzleData.solution[row][col];
+                        const x = col * cellSize + cellSize / 2;
+                        const y = row * cellSize + cellSize / 2 + 5;
+                        const displayValue = symbolType === 'numbers' ? solutionValue : String.fromCharCode(64 + solutionValue);
+                        const color = (puzzleValue === 0) ? '#e74c3c' : '#2c3e50';
+                        solutionSvg += `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="${color}">${displayValue}</text>`;
+                    }
+                }
+                
+                solutionSvg += '</svg>';
+                
+                // Download puzzle SVG
+                const puzzleBlob = new Blob([puzzleSvg], { type: 'image/svg+xml' });
+                const puzzleUrl = URL.createObjectURL(puzzleBlob);
+                const puzzleLink = document.createElement('a');
+                puzzleLink.href = puzzleUrl;
+                puzzleLink.download = `sudoku-puzzle-${index + 1}.svg`;
+                puzzleLink.click();
+                URL.revokeObjectURL(puzzleUrl);
+                
+                // Download solution SVG with delay
+                setTimeout(() => {
+                    const solutionBlob = new Blob([solutionSvg], { type: 'image/svg+xml' });
+                    const solutionUrl = URL.createObjectURL(solutionBlob);
+                    const solutionLink = document.createElement('a');
+                    solutionLink.href = solutionUrl;
+                    solutionLink.download = `sudoku-solution-${index + 1}.svg`;
+                    solutionLink.click();
+                    URL.revokeObjectURL(solutionUrl);
+                }, 100 * (index + 1));
             });
         }
 
