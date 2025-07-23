@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เครื่องมือสร้างซูโดกุ - Sudoku Generator</title>
+    <title>Advanced Sudoku Puzzle Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -27,7 +27,6 @@
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
         }
 
         h1 {
@@ -39,523 +38,457 @@
         }
 
         .controls {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            justify-content: center;
             margin-bottom: 30px;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(52, 152, 219, 0.1);
             border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         label {
             font-weight: bold;
-            color: #34495e;
-            font-size: 1.1em;
+            color: #2c3e50;
+            font-size: 14px;
         }
 
         select, button {
-            padding: 12px 20px;
+            padding: 12px;
             border: 2px solid #3498db;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             transition: all 0.3s ease;
         }
 
         select {
             background: white;
-            color: #2c3e50;
-            cursor: pointer;
-        }
-
-        select:hover, select:focus {
-            border-color: #2980b9;
-            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
-            outline: none;
         }
 
         button {
-            background: linear-gradient(135deg, #3498db, #2980b9);
+            background: linear-gradient(45deg, #3498db, #2980b9);
             color: white;
             cursor: pointer;
-            border: none;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         button:hover {
-            background: linear-gradient(135deg, #2980b9, #1f6391);
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(52, 152, 219, 0.4);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        .sudoku-container {
+        .action-buttons {
             display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
             justify-content: center;
             margin-bottom: 30px;
         }
 
-        .sudoku-grid {
-            display: inline-block;
-            border: 4px solid #2c3e50;
-            border-radius: 10px;
+        .action-buttons button {
+            flex: 1;
+            min-width: 120px;
+            max-width: 200px;
+        }
+
+        .puzzle-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .puzzle-wrapper {
             background: white;
-            padding: 10px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        /* 4x4 Grid */
-        .grid-4x4 {
-            display: grid;
-            grid-template-columns: repeat(4, 40px);
-            grid-template-rows: repeat(4, 40px);
-            gap: 1px;
-        }
-
-        .grid-4x4 .cell {
-            border: 1px solid #bdc3c7;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 3px solid #2c3e50;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+        }
+
+        .puzzle-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2c3e50;
             font-size: 18px;
-            font-weight: bold;
-            color: #2c3e50;
         }
 
-        .grid-4x4 .cell:nth-child(2n+1):nth-child(-n+2),
-        .grid-4x4 .cell:nth-child(2n):nth-child(n+3):nth-child(-n+4) {
-            background-color: #ecf0f1;
-        }
-
-        /* 6x6 Grid */
-        .grid-6x6 {
-            display: grid;
-            grid-template-columns: repeat(6, 35px);
-            grid-template-rows: repeat(6, 35px);
-            gap: 1px;
-        }
-
-        .grid-6x6 .cell {
-            border: 1px solid #bdc3c7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        /* 9x9 Grid */
-        .grid-9x9 {
-            display: grid;
-            grid-template-columns: repeat(9, 35px);
-            grid-template-rows: repeat(9, 35px);
-            gap: 1px;
-        }
-
-        .grid-9x9 .cell {
-            border: 1px solid #bdc3c7;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .puzzle-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #7f8c8d;
             font-size: 14px;
+        }
+
+        .sudoku-grid {
+            display: grid;
+            gap: 0;
+            border: 4px solid #2c3e50;
+            border-radius: 8px;
+            background: #2c3e50;
+            padding: 2px;
+        }
+
+        /* Dynamic grid layouts based on size */
+        .grid-2x2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3x3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-5x5 { grid-template-columns: repeat(5, 1fr); }
+        .grid-6x6 { grid-template-columns: repeat(6, 1fr); }
+        .grid-9x9 { grid-template-columns: repeat(9, 1fr); }
+
+        .sudoku-cell {
+            width: 45px;
+            height: 45px;
+            border: 1px solid #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: bold;
+            font-size: 18px;
+            background: white;
             color: #2c3e50;
+            position: relative;
         }
 
-        /* 9x9 subgrid styling */
-        .grid-9x9 .cell:nth-child(3n) {
-            border-right: 3px solid #34495e;
-        }
-
-        .grid-9x9 .cell:nth-child(n+19):nth-child(-n+27),
-        .grid-9x9 .cell:nth-child(n+46):nth-child(-n+54) {
-            border-bottom: 3px solid #34495e;
-        }
-
-        .empty-cell {
-            background-color: #f8f9fa;
-        }
-
-        .given-cell {
-            background-color: #e8f4fd;
-        }
+        /* Responsive cell sizes */
+        .size-2 .sudoku-cell { width: 60px; height: 60px; font-size: 24px; }
+        .size-3 .sudoku-cell { width: 55px; height: 55px; font-size: 22px; }
+        .size-4 .sudoku-cell { width: 50px; height: 50px; font-size: 20px; }
+        .size-5 .sudoku-cell { width: 45px; height: 45px; font-size: 18px; }
+        .size-6 .sudoku-cell { width: 42px; height: 42px; font-size: 16px; }
+        .size-9 .sudoku-cell { width: 40px; height: 40px; font-size: 16px; }
 
         .solution-cell {
-            background-color: #f8d7da;
-            color: #721c24;
+            color: #e74c3c !important;
             font-weight: bold;
+            background: rgba(231, 76, 60, 0.1) !important;
         }
 
-        .text-output {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
+        /* Thick borders for box separation */
+        .thick-border-right {
+            border-right: 3px solid #2c3e50 !important;
+        }
+
+        .thick-border-bottom {
+            border-bottom: 3px solid #2c3e50 !important;
+        }
+
+        .export-section {
+            text-align: center;
+            margin-top: 30px;
             padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 15px;
         }
 
-        .text-output h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .sudoku-text {
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            line-height: 1.2;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid #dee2e6;
-            white-space: pre;
-            overflow-x: auto;
-            user-select: all;
-            cursor: text;
-        }
-
-        .copy-button {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            margin-top: 10px;
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-
-        .copy-button:hover {
-            background: linear-gradient(135deg, #229954, #27ae60);
-        }
-
-        .export-tabs {
+        .export-buttons {
             display: flex;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
         }
 
-        .tab-button {
-            flex: 1;
-            padding: 10px 20px;
-            border: none;
-            background: #ecf0f1;
-            color: #7f8c8d;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            border-radius: 0;
+        .export-buttons button {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            min-width: 100px;
         }
 
-        .tab-button.active {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-        }
-
-        .tab-button:hover:not(.active) {
-            background: #d5dbdb;
-            color: #2c3e50;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .info {
-            text-align: center;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 10px;
-            color: #7f8c8d;
+        .show-solution {
+            background: linear-gradient(45deg, #e74c3c, #c0392b) !important;
         }
 
         @media (max-width: 768px) {
-            .controls {
+            .puzzle-container {
                 flex-direction: column;
                 align-items: center;
             }
             
+            .size-2 .sudoku-cell { width: 50px; height: 50px; font-size: 20px; }
+            .size-3 .sudoku-cell { width: 45px; height: 45px; font-size: 18px; }
+            .size-4 .sudoku-cell { width: 40px; height: 40px; font-size: 16px; }
+            .size-5 .sudoku-cell { width: 35px; height: 35px; font-size: 14px; }
+            .size-6 .sudoku-cell { width: 32px; height: 32px; font-size: 12px; }
+            .size-9 .sudoku-cell { width: 30px; height: 30px; font-size: 12px; }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons button {
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
             h1 {
                 font-size: 2em;
             }
-            
-            .grid-4x4 {
-                grid-template-columns: repeat(4, 50px);
-                grid-template-rows: repeat(4, 50px);
-            }
-            
-            .grid-6x6 {
-                grid-template-columns: repeat(6, 40px);
-                grid-template-rows: repeat(6, 40px);
-            }
-            
-            .grid-9x9 {
-                grid-template-columns: repeat(9, 30px);
-                grid-template-rows: repeat(9, 30px);
-            }
+
+            .size-2 .sudoku-cell { width: 45px; height: 45px; font-size: 18px; }
+            .size-3 .sudoku-cell { width: 40px; height: 40px; font-size: 16px; }
+            .size-4 .sudoku-cell { width: 35px; height: 35px; font-size: 14px; }
+            .size-5 .sudoku-cell { width: 32px; height: 32px; font-size: 12px; }
+            .size-6 .sudoku-cell { width: 28px; height: 28px; font-size: 10px; }
+            .size-9 .sudoku-cell { width: 25px; height: 25px; font-size: 10px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧩 เครื่องมือสร้างซูโดกุ</h1>
+        <h1>🧩 Advanced Sudoku Puzzle Generator</h1>
         
         <div class="controls">
             <div class="control-group">
-                <label for="size">ขนาดตาราง:</label>
-                <select id="size">
-                    <option value="4">4×4</option>
-                    <option value="6">6×6</option>
-                    <option value="9" selected>9×9</option>
+                <label for="gridSize">Grid Size:</label>
+                <select id="gridSize">
+                    <option value="2">2×2 (Mini)</option>
+                    <option value="3">3×3 (Micro)</option>
+                    <option value="4">4×4 (Small)</option>
+                    <option value="5">5×5 (Medium)</option>
+                    <option value="6">6×6 (Large)</option>
+                    <option value="9" selected>9×9 (Classic)</option>
                 </select>
             </div>
             
             <div class="control-group">
-                <label for="difficulty">ระดับความยาก:</label>
+                <label for="difficulty">Difficulty Level:</label>
                 <select id="difficulty">
-                    <option value="easy">ง่าย</option>
-                    <option value="medium" selected>ปานกลาง</option>
-                    <option value="hard">ยาก</option>
-                    <option value="expert">ยากมาก</option>
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="expert">Expert</option>
                 </select>
             </div>
             
             <div class="control-group">
-                <button onclick="generateSudoku()">🎲 สร้างซูโดกุใหม่</button>
+                <label for="symbolType">Symbol Type:</label>
+                <select id="symbolType">
+                    <option value="numbers" selected>Numbers (1,2,3...)</option>
+                    <option value="letters">Letters (A,B,C...)</option>
+                </select>
             </div>
             
             <div class="control-group">
-                <button onclick="showSolution()" id="solutionBtn" disabled>💡 แสดงเฉลย</button>
-            </div>
-            
-            <div class="control-group">
-                <button onclick="exportToPDF()">📄 บันทึก PDF</button>
-            </div>
-            
-            <div class="control-group">
-                <button onclick="exportToSVG()">🎨 บันทึก SVG</button>
-            </div>
-            
-            <div class="control-group">
-                <button onclick="exportToExcel()">📊 บันทึก Excel</button>
+                <label for="puzzleCount">Number of Puzzles:</label>
+                <select id="puzzleCount">
+                    <option value="1" selected>1 Puzzle</option>
+                    <option value="2">2 Puzzles</option>
+                    <option value="3">3 Puzzles</option>
+                    <option value="4">4 Puzzles</option>
+                </select>
             </div>
         </div>
-
-        <div class="sudoku-container">
-            <div id="sudoku-grid" class="sudoku-grid"></div>
+        
+        <div class="action-buttons">
+            <button onclick="generatePuzzles()">🎲 Generate New Puzzles</button>
+            <button onclick="showAllSolutions()" class="show-solution">👁️ Show Solutions</button>
+            <button onclick="hideAllSolutions()">🙈 Hide Solutions</button>
+            <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
         </div>
-
-        <div class="text-output">
-            <h3>📋 ตารางที่คัดลอกได้</h3>
-            <div class="export-tabs">
-                <button class="tab-button active" onclick="showTab('text')">📝 ข้อความ</button>
-                <button class="tab-button" onclick="showTab('excel')">📊 Excel</button>
+        
+        <div id="puzzleContainer" class="puzzle-container"></div>
+        
+        <div class="export-section">
+            <h3>Export Options</h3>
+            <div class="export-buttons">
+                <button onclick="exportToPDF()">📄 Export to PDF</button>
+                <button onclick="exportToExcel()">📊 Export to Excel</button>
+                <button onclick="exportToSVG()">🎨 Export to SVG</button>
             </div>
-            <div id="text-tab" class="tab-content active">
-                <pre id="sudoku-text" class="sudoku-text"></pre>
-                <button class="copy-button" onclick="copyToClipboard('text')">📄 คัดลอกตาราง</button>
-            </div>
-            <div id="excel-tab" class="tab-content">
-                <pre id="sudoku-excel" class="sudoku-text"></pre>
-                <button class="copy-button" onclick="copyToClipboard('excel')">📊 คัดลอกสำหรับ Excel</button>
-            </div>
-        </div>
-
-        <div class="info">
-            <p>💡 เคล็ดลับ: 
-                <br>📝 <strong>ข้อความ</strong> - คัดลอกแบบธรรมดา
-                <br>📊 <strong>Excel</strong> - คัดลอกแล้ววางใน Excel จะแยกเป็นเซลล์อัตโนมัติ
-                <br>📄 <strong>บันทึก Excel</strong> - ไฟล์ .xlsx พร้อมสีและรูปแบบ
-            </p>
         </div>
     </div>
 
     <script>
-        let currentPuzzle = [];
-        let currentSolution = [];
-        let currentSize = 9;
-        let showingSolution = false;
+        let currentPuzzles = [];
+        let showingSolutions = false;
 
-        // Difficulty settings
-        const difficultySettings = {
-            4: {
-                easy: 8,    // cells to remove out of 16
-                medium: 10,
-                hard: 12,
-                expert: 14
-            },
-            6: {
-                easy: 18,   // cells to remove out of 36
-                medium: 22,
-                hard: 26,
-                expert: 30
-            },
-            9: {
-                easy: 35,   // cells to remove out of 81
-                medium: 45,
-                hard: 55,
-                expert: 65
-            }
-        };
-
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        function isValidMove(grid, size, row, col, num) {
-            // Check row
-            for (let x = 0; x < size; x++) {
-                if (grid[row][x] === num) return false;
+        class SudokuGenerator {
+            constructor(size) {
+                this.size = size;
+                this.boxSize = this.getBoxSize(size);
+                this.grid = Array(size).fill().map(() => Array(size).fill(0));
+                this.solution = Array(size).fill().map(() => Array(size).fill(0));
             }
 
-            // Check column
-            for (let x = 0; x < size; x++) {
-                if (grid[x][col] === num) return false;
+            getBoxSize(size) {
+                if (size === 2) return [1, 2];
+                if (size === 3) return [1, 3];
+                if (size === 4) return [2, 2];
+                if (size === 5) return [1, 5];
+                if (size === 6) return [2, 3];
+                if (size === 9) return [3, 3];
+                return [Math.floor(Math.sqrt(size)), Math.ceil(size / Math.floor(Math.sqrt(size)))];
             }
 
-            // Check subgrid
-            let subgridSize;
-            if (size === 4) subgridSize = 2;
-            else if (size === 6) subgridSize = 2; // 2x3 or 3x2
-            else if (size === 9) subgridSize = 3;
+            isValid(grid, row, col, num) {
+                // Check row
+                for (let x = 0; x < this.size; x++) {
+                    if (grid[row][x] === num) return false;
+                }
 
-            if (size === 6) {
-                // For 6x6, use 2x3 subgrids
-                const startRow = Math.floor(row / 2) * 2;
-                const startCol = Math.floor(col / 3) * 3;
-                for (let i = 0; i < 2; i++) {
-                    for (let j = 0; j < 3; j++) {
-                        if (grid[i + startRow][j + startCol] === num) return false;
+                // Check column
+                for (let x = 0; x < this.size; x++) {
+                    if (grid[x][col] === num) return false;
+                }
+
+                // Check box
+                const boxRow = Math.floor(row / this.boxSize[0]) * this.boxSize[0];
+                const boxCol = Math.floor(col / this.boxSize[1]) * this.boxSize[1];
+                
+                for (let i = 0; i < this.boxSize[0]; i++) {
+                    for (let j = 0; j < this.boxSize[1]; j++) {
+                        if (grid[boxRow + i][boxCol + j] === num) return false;
                     }
                 }
-            } else {
-                const startRow = row - (row % subgridSize);
-                const startCol = col - (col % subgridSize);
-                for (let i = 0; i < subgridSize; i++) {
-                    for (let j = 0; j < subgridSize; j++) {
-                        if (grid[i + startRow][j + startCol] === num) return false;
-                    }
-                }
+
+                return true;
             }
 
-            return true;
+            solveSudoku(grid) {
+                for (let row = 0; row < this.size; row++) {
+                    for (let col = 0; col < this.size; col++) {
+                        if (grid[row][col] === 0) {
+                            const numbers = this.shuffleArray([...Array(this.size)].map((_, i) => i + 1));
+                            for (let num of numbers) {
+                                if (this.isValid(grid, row, col, num)) {
+                                    grid[row][col] = num;
+                                    if (this.solveSudoku(grid)) return true;
+                                    grid[row][col] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            generate(difficulty) {
+                // Generate complete solution
+                this.grid = Array(this.size).fill().map(() => Array(this.size).fill(0));
+                this.solveSudoku(this.grid);
+                this.solution = this.grid.map(row => [...row]);
+
+                // Remove numbers based on difficulty
+                const difficultyMap = {
+                    easy: 0.4,
+                    medium: 0.5,
+                    hard: 0.6,
+                    expert: 0.7
+                };
+
+                const removeCount = Math.floor(this.size * this.size * difficultyMap[difficulty]);
+                const positions = [];
+                
+                for (let i = 0; i < this.size; i++) {
+                    for (let j = 0; j < this.size; j++) {
+                        positions.push([i, j]);
+                    }
+                }
+
+                const toRemove = this.shuffleArray(positions).slice(0, removeCount);
+                toRemove.forEach(([row, col]) => {
+                    this.grid[row][col] = 0;
+                });
+
+                return {
+                    puzzle: this.grid.map(row => [...row]),
+                    solution: this.solution.map(row => [...row])
+                };
+            }
         }
 
-        function solveSudoku(grid, size) {
+        function generatePuzzles() {
+            const size = parseInt(document.getElementById('gridSize').value);
+            const difficulty = document.getElementById('difficulty').value;
+            const count = parseInt(document.getElementById('puzzleCount').value);
+            
+            currentPuzzles = [];
+            showingSolutions = false;
+            
+            for (let i = 0; i < count; i++) {
+                const generator = new SudokuGenerator(size);
+                const puzzleData = generator.generate(difficulty);
+                currentPuzzles.push({
+                    puzzle: puzzleData.puzzle,
+                    solution: puzzleData.solution,
+                    size: size,
+                    difficulty: difficulty
+                });
+            }
+            
+            displayPuzzles();
+        }
+
+        function displayPuzzles() {
+            const container = document.getElementById('puzzleContainer');
+            const symbolType = document.getElementById('symbolType').value;
+            container.innerHTML = '';
+            
+            currentPuzzles.forEach((puzzleData, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'puzzle-wrapper';
+                wrapper.innerHTML = `
+                    <div class="puzzle-title">Puzzle ${index + 1}</div>
+                    <div class="puzzle-info">Size: ${puzzleData.size}×${puzzleData.size} | Difficulty: ${puzzleData.difficulty.charAt(0).toUpperCase() + puzzleData.difficulty.slice(1)}</div>
+                    <div class="sudoku-grid grid-${puzzleData.size}x${puzzleData.size} size-${puzzleData.size}" id="grid-${index}"></div>
+                `;
+                
+                const grid = wrapper.querySelector('.sudoku-grid');
+                createGrid(grid, puzzleData, symbolType, index);
+                container.appendChild(wrapper);
+            });
+        }
+
+        function createGrid(container, puzzleData, symbolType, puzzleIndex) {
+            container.innerHTML = '';
+            const size = puzzleData.size;
+            const boxSize = getBoxSize(size);
+            
             for (let row = 0; row < size; row++) {
                 for (let col = 0; col < size; col++) {
-                    if (grid[row][col] === 0) {
-                        const numbers = Array.from({length: size}, (_, i) => i + 1);
-                        shuffleArray(numbers);
-                        
-                        for (let num of numbers) {
-                            if (isValidMove(grid, size, row, col, num)) {
-                                grid[row][col] = num;
-                                if (solveSudoku(grid, size)) return true;
-                                grid[row][col] = 0;
-                            }
-                        }
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        function generateCompleteSudoku(size) {
-            const grid = Array(size).fill().map(() => Array(size).fill(0));
-            solveSudoku(grid, size);
-            return grid;
-        }
-
-        function createPuzzle(completeGrid, size, difficulty) {
-            const puzzle = completeGrid.map(row => [...row]);
-            const cellsToRemove = difficultySettings[size][difficulty];
-            
-            const positions = [];
-            for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {
-                    positions.push([i, j]);
-                }
-            }
-            shuffleArray(positions);
-
-            for (let i = 0; i < cellsToRemove && i < positions.length; i++) {
-                const [row, col] = positions[i];
-                puzzle[row][col] = 0;
-            }
-
-            return puzzle;
-        }
-
-        function generateSudoku() {
-            const size = parseInt(document.getElementById('size').value);
-            const difficulty = document.getElementById('difficulty').value;
-            
-            currentSize = size;
-            const completeGrid = generateCompleteSudoku(size);
-            currentSolution = completeGrid.map(row => [...row]); // Keep the complete solution
-            currentPuzzle = createPuzzle(completeGrid, size, difficulty);
-            showingSolution = false;
-            
-            document.getElementById('solutionBtn').disabled = false;
-            document.getElementById('solutionBtn').textContent = '💡 แสดงเฉลย';
-            
-            displaySudoku();
-            displayTextVersion();
-        }
-
-        function displaySudoku() {
-            const container = document.getElementById('sudoku-grid');
-            container.innerHTML = '';
-            container.className = `sudoku-grid grid-${currentSize}x${currentSize}`;
-
-            const gridToShow = showingSolution ? currentSolution : currentPuzzle;
-
-            for (let i = 0; i < currentSize; i++) {
-                for (let j = 0; j < currentSize; j++) {
                     const cell = document.createElement('div');
-                    cell.className = 'cell';
+                    cell.className = 'sudoku-cell';
+                    cell.id = `cell-${puzzleIndex}-${row}-${col}`;
                     
-                    if (showingSolution) {
-                        // In solution mode, show all numbers
-                        cell.textContent = gridToShow[i][j];
-                        if (currentPuzzle[i][j] === 0) {
-                            cell.className += ' solution-cell';
-                        } else {
-                            cell.className += ' given-cell';
-                        }
-                    } else {
-                        // In puzzle mode
-                        if (gridToShow[i][j] === 0) {
-                            cell.className += ' empty-cell';
-                            cell.textContent = '';
-                        } else {
-                            cell.className += ' given-cell';
-                            cell.textContent = gridToShow[i][j];
-                        }
+                    // Add thick borders for box separation
+                    if ((col + 1) % boxSize[1] === 0 && col < size - 1) {
+                        cell.classList.add('thick-border-right');
+                    }
+                    if ((row + 1) % boxSize[0] === 0 && row < size - 1) {
+                        cell.classList.add('thick-border-bottom');
+                    }
+                    
+                    const value = puzzleData.puzzle[row][col];
+                    if (value !== 0) {
+                        cell.textContent = symbolType === 'numbers' ? value : String.fromCharCode(64 + value);
                     }
                     
                     container.appendChild(cell);
@@ -563,338 +496,214 @@
             }
         }
 
-        function displayTextVersion() {
-            // Text format
-            let textVersion = '';
-            const gridToShow = showingSolution ? currentSolution : currentPuzzle;
-            
-            for (let i = 0; i < currentSize; i++) {
-                let row = '';
-                for (let j = 0; j < currentSize; j++) {
-                    if (!showingSolution && gridToShow[i][j] === 0) {
-                        row += '. ';
-                    } else {
-                        row += gridToShow[i][j] + ' ';
-                    }
-                }
-                textVersion += row.trim() + '\n';
-            }
-            
-            document.getElementById('sudoku-text').textContent = textVersion;
-
-            // Excel format (Tab-separated)
-            let excelVersion = '';
-            for (let i = 0; i < currentSize; i++) {
-                let row = [];
-                for (let j = 0; j < currentSize; j++) {
-                    if (!showingSolution && gridToShow[i][j] === 0) {
-                        row.push('');
-                    } else {
-                        row.push(gridToShow[i][j]);
-                    }
-                }
-                excelVersion += row.join('\t') + '\n';
-            }
-            
-            document.getElementById('sudoku-excel').textContent = excelVersion;
+        function getBoxSize(size) {
+            if (size === 2) return [1, 2];
+            if (size === 3) return [1, 3];
+            if (size === 4) return [2, 2];
+            if (size === 5) return [1, 5];
+            if (size === 6) return [2, 3];
+            if (size === 9) return [3, 3];
+            return [Math.floor(Math.sqrt(size)), Math.ceil(size / Math.floor(Math.sqrt(size)))];
         }
 
-        function copyToClipboard(type) {
-            const elementId = type === 'excel' ? 'sudoku-excel' : 'sudoku-text';
-            const textElement = document.getElementById(elementId);
-            const text = textElement.textContent;
+        function showAllSolutions() {
+            const symbolType = document.getElementById('symbolType').value;
+            showingSolutions = true;
             
-            navigator.clipboard.writeText(text).then(() => {
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = '✅ คัดลอกแล้ว!';
-                button.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
-                }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                textElement.select();
-                document.execCommand('copy');
-                alert('คัดลอกแล้ว!');
+            currentPuzzles.forEach((puzzleData, puzzleIndex) => {
+                const size = puzzleData.size;
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        const cell = document.getElementById(`cell-${puzzleIndex}-${row}-${col}`);
+                        const puzzleValue = puzzleData.puzzle[row][col];
+                        const solutionValue = puzzleData.solution[row][col];
+                        
+                        if (puzzleValue === 0) {
+                            cell.textContent = symbolType === 'numbers' ? solutionValue : String.fromCharCode(64 + solutionValue);
+                            cell.classList.add('solution-cell');
+                        }
+                    }
+                }
             });
         }
 
-        function showTab(tabName) {
-            // Hide all tab contents
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => content.classList.remove('active'));
+        function hideAllSolutions() {
+            showingSolutions = false;
             
-            // Remove active class from all buttons
-            const tabButtons = document.querySelectorAll('.tab-button');
-            tabButtons.forEach(button => button.classList.remove('active'));
-            
-            // Show selected tab
-            document.getElementById(tabName + '-tab').classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        function exportToExcel() {
-            const wb = XLSX.utils.book_new();
-            
-            // Create puzzle worksheet
-            const puzzleData = currentPuzzle.map(row => 
-                row.map(cell => cell === 0 ? '' : cell)
-            );
-            const puzzleWs = XLSX.utils.aoa_to_sheet(puzzleData);
-            
-            // Style the puzzle worksheet
-            const puzzleRange = XLSX.utils.decode_range(puzzleWs['!ref']);
-            for (let R = puzzleRange.s.r; R <= puzzleRange.e.r; ++R) {
-                for (let C = puzzleRange.s.c; C <= puzzleRange.e.c; ++C) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (!puzzleWs[cellAddress]) puzzleWs[cellAddress] = { t: 's', v: '' };
-                    
-                    puzzleWs[cellAddress].s = {
-                        border: {
-                            top: { style: 'thin', color: { rgb: 'FF000000' } },
-                            bottom: { style: 'thin', color: { rgb: 'FF000000' } },
-                            left: { style: 'thin', color: { rgb: 'FF000000' } },
-                            right: { style: 'thin', color: { rgb: 'FF000000' } }
-                        },
-                        alignment: { horizontal: 'center', vertical: 'center' },
-                        font: { bold: true, size: 14 }
-                    };
-                    
-                    if (currentPuzzle[R][C] !== 0) {
-                        puzzleWs[cellAddress].s.fill = {
-                            fgColor: { rgb: 'FFE8F4FD' }
-                        };
+            currentPuzzles.forEach((puzzleData, puzzleIndex) => {
+                const size = puzzleData.size;
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        const cell = document.getElementById(`cell-${puzzleIndex}-${row}-${col}`);
+                        const puzzleValue = puzzleData.puzzle[row][col];
+                        
+                        if (puzzleValue === 0) {
+                            cell.textContent = '';
+                            cell.classList.remove('solution-cell');
+                        }
                     }
                 }
-            }
-            
-            // Create solution worksheet
-            const solutionData = currentSolution.map((row, i) => 
-                row.map((cell, j) => {
-                    return cell;
-                })
-            );
-            const solutionWs = XLSX.utils.aoa_to_sheet(solutionData);
-            
-            // Style the solution worksheet
-            const solutionRange = XLSX.utils.decode_range(solutionWs['!ref']);
-            for (let R = solutionRange.s.r; R <= solutionRange.e.r; ++R) {
-                for (let C = solutionRange.s.c; C <= solutionRange.e.c; ++C) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                    
-                    solutionWs[cellAddress].s = {
-                        border: {
-                            top: { style: 'thin', color: { rgb: 'FF000000' } },
-                            bottom: { style: 'thin', color: { rgb: 'FF000000' } },
-                            left: { style: 'thin', color: { rgb: 'FF000000' } },
-                            right: { style: 'thin', color: { rgb: 'FF000000' } }
-                        },
-                        alignment: { horizontal: 'center', vertical: 'center' },
-                        font: { bold: true, size: 14 }
-                    };
-                    
-                    if (currentPuzzle[R][C] === 0) {
-                        // Solution cells in red
-                        solutionWs[cellAddress].s.fill = {
-                            fgColor: { rgb: 'FFF8D7DA' }
-                        };
-                        solutionWs[cellAddress].s.font.color = { rgb: 'FF721C24' };
-                    } else {
-                        // Given cells in blue
-                        solutionWs[cellAddress].s.fill = {
-                            fgColor: { rgb: 'FFE8F4FD' }
-                        };
-                    }
-                }
-            }
-            
-            // Set column widths
-            const colWidths = Array(currentSize).fill({ wch: 4 });
-            puzzleWs['!cols'] = colWidths;
-            solutionWs['!cols'] = colWidths;
-            
-            // Add worksheets to workbook
-            XLSX.utils.book_append_sheet(wb, puzzleWs, 'Puzzle');
-            XLSX.utils.book_append_sheet(wb, solutionWs, 'Solution');
-            
-            // Save the file
-            const difficulty = document.getElementById('difficulty').value;
-            XLSX.writeFile(wb, `sudoku_${currentSize}x${currentSize}_${difficulty}.xlsx`);
+            });
         }
 
-        function showSolution() {
-            showingSolution = !showingSolution;
+        function copyToClipboard() {
+            const symbolType = document.getElementById('symbolType').value;
+            let text = '';
             
-            const button = document.getElementById('solutionBtn');
-            if (showingSolution) {
-                button.textContent = '🧩 แสดงโจทย์';
-                button.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
-            } else {
-                button.textContent = '💡 แสดงเฉลย';
-                button.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
-            }
+            currentPuzzles.forEach((puzzleData, index) => {
+                text += `Puzzle ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty}):\n`;
+                
+                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
+                
+                for (let row = 0; row < puzzleData.size; row++) {
+                    for (let col = 0; col < puzzleData.size; col++) {
+                        const value = gridToUse[row][col];
+                        if (value === 0) {
+                            text += '_ ';
+                        } else {
+                            text += (symbolType === 'numbers' ? value : String.fromCharCode(64 + value)) + ' ';
+                        }
+                    }
+                    text += '\n';
+                }
+                text += '\n';
+            });
             
-            displaySudoku();
-            displayTextVersion();
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Puzzles copied to clipboard!');
+            });
         }
 
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const symbolType = document.getElementById('symbolType').value;
             
-            // Title
-            doc.setFontSize(20);
-            doc.text('Sudoku Puzzle', 20, 20);
+            let yPos = 20;
             
-            // Size and difficulty info
-            doc.setFontSize(12);
-            const size = currentSize;
-            const difficulty = document.getElementById('difficulty').value;
-            doc.text(`Size: ${size}x${size}, Difficulty: ${difficulty}`, 20, 35);
-            
-            // Draw puzzle
-            drawSudokuToPDF(doc, currentPuzzle, 20, 50, 'Puzzle');
-            
-            // Draw solution on new page or below
-            if (currentSize <= 6) {
-                drawSudokuToPDF(doc, currentSolution, 120, 50, 'Solution');
-            } else {
-                doc.addPage();
-                doc.setFontSize(20);
-                doc.text('Solution', 20, 20);
-                drawSudokuToPDF(doc, currentSolution, 20, 35, '');
-            }
-            
-            doc.save(`sudoku_${size}x${size}_${difficulty}.pdf`);
-        }
-
-        function drawSudokuToPDF(doc, grid, startX, startY, title) {
-            if (title) {
-                doc.setFontSize(14);
-                doc.text(title, startX, startY - 5);
-            }
-            
-            const cellSize = currentSize <= 4 ? 15 : (currentSize <= 6 ? 12 : 8);
-            const fontSize = currentSize <= 4 ? 12 : (currentSize <= 6 ? 10 : 8);
-            
-            doc.setFontSize(fontSize);
-            doc.setLineWidth(0.5);
-            
-            for (let i = 0; i < currentSize; i++) {
-                for (let j = 0; j < currentSize; j++) {
-                    const x = startX + j * cellSize;
-                    const y = startY + i * cellSize;
-                    
-                    // Draw cell border
-                    doc.rect(x, y, cellSize, cellSize);
-                    
-                    // Draw thick borders for subgrids
-                    if (currentSize === 9) {
-                        if (j % 3 === 0) doc.setLineWidth(1.5);
-                        if (i % 3 === 0) doc.setLineWidth(1.5);
+            currentPuzzles.forEach((puzzleData, index) => {
+                if (index > 0) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setFontSize(16);
+                doc.text(`Puzzle ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`, 20, yPos);
+                yPos += 20;
+                
+                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
+                const cellSize = Math.min(120 / puzzleData.size, 15);
+                
+                for (let row = 0; row < puzzleData.size; row++) {
+                    for (let col = 0; col < puzzleData.size; col++) {
+                        const x = 20 + col * cellSize;
+                        const y = yPos + row * cellSize;
+                        
                         doc.rect(x, y, cellSize, cellSize);
-                        doc.setLineWidth(0.5);
-                    }
-                    
-                    // Add number if not zero
-                    if (grid[i][j] !== 0) {
-                        const textX = x + cellSize / 2 - 2;
-                        const textY = y + cellSize / 2 + 2;
-                        doc.text(grid[i][j].toString(), textX, textY);
+                        
+                        const value = gridToUse[row][col];
+                        if (value !== 0) {
+                            const displayValue = symbolType === 'numbers' ? value.toString() : String.fromCharCode(64 + value);
+                            doc.text(displayValue, x + cellSize/2 - 2, y + cellSize/2 + 2);
+                        }
                     }
                 }
-            }
+            });
+            
+            doc.save('sudoku-puzzles.pdf');
+        }
+
+        function exportToExcel() {
+            const symbolType = document.getElementById('symbolType').value;
+            const wb = XLSX.utils.book_new();
+            
+            currentPuzzles.forEach((puzzleData, index) => {
+                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
+                const wsData = [];
+                
+                // Add title row
+                wsData.push([`Puzzle ${index + 1} (${puzzleData.size}×${puzzleData.size}, ${puzzleData.difficulty})`]);
+                wsData.push([]);
+                
+                // Add grid data
+                for (let row = 0; row < puzzleData.size; row++) {
+                    const rowData = [];
+                    for (let col = 0; col < puzzleData.size; col++) {
+                        const value = gridToUse[row][col];
+                        if (value === 0) {
+                            rowData.push('');
+                        } else {
+                            rowData.push(symbolType === 'numbers' ? value : String.fromCharCode(64 + value));
+                        }
+                    }
+                    wsData.push(rowData);
+                }
+                
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, `Puzzle ${index + 1}`);
+            });
+            
+            XLSX.writeFile(wb, 'sudoku-puzzles.xlsx');
         }
 
         function exportToSVG() {
-            const svgContent = generateSVG();
-            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
+            const symbolType = document.getElementById('symbolType').value;
             
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `sudoku_${currentSize}x${currentSize}_${document.getElementById('difficulty').value}.svg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function generateSVG() {
-            const cellSize = currentSize <= 4 ? 40 : (currentSize <= 6 ? 35 : 30);
-            const fontSize = currentSize <= 4 ? 18 : (currentSize <= 6 ? 16 : 14);
-            const gridSize = currentSize * cellSize;
-            const padding = 20;
-            const titleHeight = 40;
-            
-            let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${gridSize * 2 + padding * 3}" height="${gridSize + titleHeight + padding * 2}">`;
-            
-            // Background
-            svg += `<rect width="100%" height="100%" fill="white"/>`;
-            
-            // Title
-            svg += `<text x="${padding}" y="${padding + 20}" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">Sudoku ${currentSize}×${currentSize}</text>`;
-            
-            // Draw puzzle
-            svg += drawSudokuSVG(currentPuzzle, padding, titleHeight + padding, cellSize, fontSize, 'Puzzle', false);
-            
-            // Draw solution
-            svg += drawSudokuSVG(currentSolution, gridSize + padding * 2, titleHeight + padding, cellSize, fontSize, 'Solution', true);
-            
-            svg += '</svg>';
-            return svg;
-        }
-
-        function drawSudokuSVG(grid, startX, startY, cellSize, fontSize, title, isSolution) {
-            let svg = '';
-            
-            // Subtitle
-            svg += `<text x="${startX}" y="${startY - 10}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#34495e">${title}</text>`;
-            
-            for (let i = 0; i < currentSize; i++) {
-                for (let j = 0; j < currentSize; j++) {
-                    const x = startX + j * cellSize;
-                    const y = startY + i * cellSize;
-                    
-                    // Cell background
-                    let fillColor = 'white';
-                    if (isSolution && currentPuzzle[i][j] === 0) {
-                        fillColor = '#f8d7da'; // Red for solution cells
-                    } else if (!isSolution && grid[i][j] !== 0) {
-                        fillColor = '#e8f4fd'; // Blue for given cells
-                    }
-                    
-                    svg += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${fillColor}" stroke="#bdc3c7" stroke-width="1"/>`;
-                    
-                    // Thick borders for 9x9 subgrids
-                    if (currentSize === 9) {
-                        if (j % 3 === 0) {
-                            svg += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y + cellSize}" stroke="#34495e" stroke-width="3"/>`;
+            currentPuzzles.forEach((puzzleData, index) => {
+                const size = puzzleData.size;
+                const cellSize = 30;
+                const gridSize = size * cellSize;
+                const boxSize = getBoxSize(size);
+                
+                let svg = `<svg width="${gridSize}" height="${gridSize}" xmlns="http://www.w3.org/2000/svg">`;
+                svg += `<rect width="${gridSize}" height="${gridSize}" fill="white" stroke="#2c3e50" stroke-width="3"/>`;
+                
+                const gridToUse = showingSolutions ? puzzleData.solution : puzzleData.puzzle;
+                
+                // Draw grid lines and cells
+                for (let row = 0; row <= size; row++) {
+                    const y = row * cellSize;
+                    const strokeWidth = (row % boxSize[0] === 0) ? 3 : 1;
+                    svg += `<line x1="0" y1="${y}" x2="${gridSize}" y2="${y}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
+                }
+                
+                for (let col = 0; col <= size; col++) {
+                    const x = col * cellSize;
+                    const strokeWidth = (col % boxSize[1] === 0) ? 3 : 1;
+                    svg += `<line x1="${x}" y1="0" x2="${x}" y2="${gridSize}" stroke="#2c3e50" stroke-width="${strokeWidth}"/>`;
+                }
+                
+                // Add numbers/letters
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        const value = gridToUse[row][col];
+                        if (value !== 0) {
+                            const x = col * cellSize + cellSize / 2;
+                            const y = row * cellSize + cellSize / 2 + 5;
+                            const displayValue = symbolType === 'numbers' ? value : String.fromCharCode(64 + value);
+                            const color = (puzzleData.puzzle[row][col] === 0 && showingSolutions) ? '#e74c3c' : '#2c3e50';
+                            svg += `<text x="${x}" y="${y}" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="${color}">${displayValue}</text>`;
                         }
-                        if (i % 3 === 0) {
-                            svg += `<line x1="${x}" y1="${y}" x2="${x + cellSize}" y2="${y}" stroke="#34495e" stroke-width="3"/>`;
-                        }
-                    }
-                    
-                    // Add number
-                    if (grid[i][j] !== 0) {
-                        const textColor = (isSolution && currentPuzzle[i][j] === 0) ? '#721c24' : '#2c3e50';
-                        svg += `<text x="${x + cellSize/2}" y="${y + cellSize/2 + fontSize/3}" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold" fill="${textColor}" text-anchor="middle">${grid[i][j]}</text>`;
                     }
                 }
-            }
-            
-            // Outer border
-            svg += `<rect x="${startX}" y="${startY}" width="${currentSize * cellSize}" height="${currentSize * cellSize}" fill="none" stroke="#2c3e50" stroke-width="4"/>`;
-            
-            return svg;
+                
+                svg += '</svg>';
+                
+                // Download SVG
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sudoku-puzzle-${index + 1}.svg`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
         }
 
-        // Initialize with a puzzle
-        generateSudoku();
+        // Generate initial puzzle
+        window.onload = function() {
+            generatePuzzles();
+        };
     </script>
 </body>
 </html>
