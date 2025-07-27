@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle Generator - Sudoku & Word Search</title>
+    <title>Word & Number Sudoku Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
@@ -21,24 +21,22 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
+            border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
             text-align: center;
-            color: #4a5568;
+            color: #333;
             margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .controls {
@@ -51,31 +49,35 @@
         .control-group {
             background: white;
             padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
 
         .control-group h3 {
-            color: #2d3748;
+            color: #333;
             margin-bottom: 15px;
-            font-size: 1.2em;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #4a5568;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
         }
 
         select, input, textarea {
             width: 100%;
             padding: 10px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
-            margin-bottom: 15px;
             transition: border-color 0.3s;
         }
 
@@ -84,52 +86,81 @@
             border-color: #667eea;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
+        .word-input {
+            height: 45px;
+            font-size: 16px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: 2px;
         }
 
-        .button-group {
+        .mode-buttons {
             display: flex;
             gap: 10px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            justify-content: center;
-            margin: 20px 0;
         }
 
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
+        .mode-btn {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 500;
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .mode-btn.active {
+            background: #667eea;
             color: white;
         }
 
-        .btn-primary:hover {
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .btn-secondary {
-            background: #f7fafc;
-            color: #4a5568;
-            border: 2px solid #e2e8f0;
-        }
-
-        .btn-secondary:hover {
-            background: #edf2f7;
-            border-color: #cbd5e0;
-        }
-
-        .puzzle-container {
+        .puzzles-container {
             display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
             gap: 30px;
             margin-top: 30px;
         }
@@ -138,787 +169,1049 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 2px solid #e2e8f0;
-        }
-
-        .puzzle-header {
-            text-align: center;
-            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            page-break-inside: avoid;
         }
 
         .puzzle-title {
-            font-size: 1.5em;
-            color: #2d3748;
-            margin-bottom: 5px;
+            text-align: center;
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
         }
 
         .puzzle-difficulty {
-            color: #718096;
+            text-align: center;
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+
+        .word-display {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+
+        .target-word {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        .word-meaning {
+            font-size: 1.1rem;
+            color: #555;
             font-style: italic;
         }
 
-        .grid {
-            display: grid;
-            gap: 2px;
-            margin: 20px auto;
-            background: #2d3748;
-            padding: 10px;
+        .number-display {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f8ff;
             border-radius: 10px;
-            width: fit-content;
+            border: 2px solid #ff6b6b;
         }
 
-        .grid-3x3 { grid-template-columns: repeat(3, 1fr); }
-        .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
-        .grid-5x5 { grid-template-columns: repeat(5, 1fr); }
-        .grid-7x7 { grid-template-columns: repeat(7, 1fr); }
-        .grid-8x8 { grid-template-columns: repeat(8, 1fr); }
-        .grid-9x9 { grid-template-columns: repeat(9, 1fr); }
-        .grid-10x10 { grid-template-columns: repeat(10, 1fr); }
+        .puzzle-grid {
+            display: inline-block;
+            margin: 0 auto 20px;
+            border: 3px solid #000;
+            background: white;
+            border-collapse: separate;
+        }
 
-        .grid-cell {
+        .sudoku-table {
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        .sudoku-table td {
             width: 40px;
             height: 40px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            vertical-align: middle;
+            font-family: Arial, sans-serif;
+            font-size: 18px;
             font-weight: bold;
-            font-size: 16px;
-            border-radius: 4px;
-            transition: all 0.3s;
+            border: 1px solid #999;
+            padding: 0;
+            margin: 0;
+            background: white;
         }
 
-        .grid-cell.solution {
-            background: #fed7d7;
-            color: #c53030;
+        /* 4x4 grid borders */
+        .sudoku-table.grid-4x4 td:nth-child(2n) {
+            border-right: 3px solid #000;
+        }
+        .sudoku-table.grid-4x4 tr:nth-child(2n) td {
+            border-bottom: 3px solid #000;
         }
 
-        .grid-cell.word-solution {
-            background: #fbd38d;
-            color: #c05621;
+        /* 6x6 grid borders */
+        .sudoku-table.grid-6x6 td:nth-child(3n) {
+            border-right: 3px solid #000;
+        }
+        .sudoku-table.grid-6x6 tr:nth-child(2n) td {
+            border-bottom: 3px solid #000;
         }
 
-        .word-list {
-            margin-top: 20px;
+        /* 9x9 grid borders */
+        .sudoku-table.grid-9x9 td:nth-child(3n) {
+            border-right: 3px solid #000;
+        }
+        .sudoku-table.grid-9x9 tr:nth-child(3n) td {
+            border-bottom: 3px solid #000;
+        }
+
+        /* Remove outer borders that get doubled */
+        .sudoku-table td:last-child {
+            border-right: none !important;
+        }
+        .sudoku-table tr:last-child td {
+            border-bottom: none !important;
+        }
+
+        .given-cell {
+            background: #f0f8ff !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+
+        .solution-cell {
+            background: white !important;
+            color: #ff0000 !important;
+            font-weight: bold;
+        }
+
+        .empty-cell {
+            background: white !important;
+            color: transparent;
+        }
+
+        .letters-used, .numbers-used {
+            margin-top: 15px;
             padding: 15px;
-            background: #f7fafc;
-            border-radius: 10px;
-            border: 2px solid #e2e8f0;
+            background: #f0f8ff;
+            border-radius: 8px;
+            text-align: center;
         }
 
-        .word-list h4 {
-            color: #2d3748;
+        .letters-used h4, .numbers-used h4 {
             margin-bottom: 10px;
+            color: #333;
         }
 
-        .words {
+        .letter-list, .number-list {
             display: flex;
+            justify-content: center;
             flex-wrap: wrap;
             gap: 10px;
         }
 
-        .word-item {
-            background: white;
-            padding: 5px 12px;
+        .letter-item, .number-item {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
             border-radius: 20px;
-            border: 1px solid #cbd5e0;
-            font-weight: 500;
-            color: #4a5568;
+            font-weight: bold;
+            font-size: 16px;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        .number-item {
+            background: #ff6b6b;
+        }
+
+        .export-section {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
 
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
             }
-            
+
+            .puzzles-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sudoku-table td {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+
             .controls {
                 grid-template-columns: 1fr;
             }
-            
-            .grid-cell {
-                width: 25px;
-                height: 25px;
-                font-size: 12px;
-            }
-            
-            h1 {
-                font-size: 2em;
+
+            .target-word {
+                font-size: 1.5rem;
+                letter-spacing: 2px;
             }
         }
 
-        @media (max-width: 480px) {
-            .grid-cell {
-                width: 20px;
-                height: 20px;
-                font-size: 10px;
+        @media print {
+            body {
+                background: white;
+                padding: 0;
             }
-        }
 
-        .toggle-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
+            .container {
+                background: white;
+                box-shadow: none;
+                max-width: none;
+            }
 
-        .toggle-btn {
-            padding: 10px 20px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
+            .controls, .action-buttons, .export-section {
+                display: none;
+            }
 
-        .toggle-btn.active {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: white;
-            border-color: transparent;
-        }
-
-        .hidden {
-            display: none;
+            .puzzle-card {
+                page-break-inside: avoid;
+                margin-bottom: 30px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🧩 Puzzle Generator</h1>
+        <h1>🔤🔢 Word & Number Sudoku Generator</h1>
         
-        <div class="toggle-buttons">
-            <button class="toggle-btn active" data-mode="both">🎯 Both Puzzles</button>
-            <button class="toggle-btn" data-mode="sudoku">🔢 Sudoku Mode</button>
-            <button class="toggle-btn" data-mode="word">📝 Word Puzzle Mode</button>
-        </div>
-
         <div class="controls">
             <div class="control-group">
-                <h3>📐 General Settings</h3>
-                <label for="gridSize">Grid Size (select multiple with Ctrl/Cmd):</label>
-                <select id="gridSize" multiple size="8">
-                    <option value="3">3×3 (Easy)</option>
-                    <option value="4" selected>4×4 (Medium)</option>
-                    <option value="5">5×5 (Hard)</option>
-                    <option value="6">6×6 (Expert)</option>
-                    <option value="7">7×7 (Very Hard)</option>
-                    <option value="8">8×8 (Extreme)</option>
-                    <option value="9">9×9 (Classic Sudoku)</option>
-                    <option value="10">10×10 (Master)</option>
-                </select>
-                
-                <label for="puzzleCount">Number of Puzzles:</label>
-                <select id="puzzleCount">
-                    <option value="1" selected>1 Puzzle</option>
-                    <option value="2">2 Puzzles</option>
-                    <option value="3">3 Puzzles</option>
-                    <option value="4">4 Puzzles</option>
-                </select>
+                <h3>🔧 Game Mode</h3>
+                <div class="mode-buttons">
+                    <button class="mode-btn active" data-mode="wordsudoku">🔤 Word Sudoku</button>
+                    <button class="mode-btn" data-mode="numbersudoku">🔢 Number Sudoku</button>
+                    <button class="mode-btn" data-mode="both">🎯 Both Puzzles</button>
+                </div>
             </div>
 
-            <div class="control-group sudoku-controls">
-                <h3>🔢 Sudoku Settings</h3>
-                <label for="sudokuDifficulty">Difficulty Level:</label>
-                <select id="sudokuDifficulty">
-                    <option value="easy">Easy</option>
-                    <option value="medium" selected>Medium</option>
-                    <option value="hard">Hard</option>
-                    <option value="expert">Expert</option>
-                </select>
+            <div class="control-group">
+                <h3>📐 Grid Settings</h3>
+                <div class="form-group">
+                    <label>Grid Size:</label>
+                    <select id="gridSize">
+                        <option value="4">4×4 (Easy - 4 letters/numbers)</option>
+                        <option value="6" selected>6×6 (Medium - 6 letters/numbers)</option>
+                        <option value="9">9×9 (Hard - 9 letters/numbers)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Number of Puzzles:</label>
+                    <select id="puzzleCount">
+                        <option value="1" selected>1 Puzzle Set</option>
+                        <option value="2">2 Puzzle Sets</option>
+                        <option value="3">3 Puzzle Sets</option>
+                        <option value="4">4 Puzzle Sets</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="control-group word-controls">
-                <h3>📝 Word Search Settings</h3>
-                <label for="wordDifficulty">Word Difficulty:</label>
-                <select id="wordDifficulty">
-                    <option value="easy">Easy (3-4 letters)</option>
-                    <option value="medium" selected>Medium (4-5 letters)</option>
-                    <option value="hard">Hard (5-6 letters)</option>
-                </select>
-                
-                <label for="customWords">Custom Words (one per line):</label>
-                <textarea id="customWords" placeholder="Leave empty for random words..."></textarea>
+            <div class="control-group word-sudoku-controls">
+                <h3>🔤 Word Sudoku Settings</h3>
+                <div class="form-group">
+                    <label>Word Difficulty Level:</label>
+                    <select id="wordDifficulty">
+                        <option value="easy">Easy (40% filled)</option>
+                        <option value="medium" selected>Medium (50% filled)</option>
+                        <option value="hard">Hard (60% filled)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Custom Word (leave empty for random):</label>
+                    <input type="text" id="customWord" class="word-input" placeholder="Enter a word..." maxlength="9">
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        💡 Tips: Enter words with unique letters for best results
+                    </small>
+                </div>
+            </div>
+
+            <div class="control-group number-sudoku-controls">
+                <h3>🔢 Number Sudoku Settings</h3>
+                <div class="form-group">
+                    <label>Number Difficulty Level:</label>
+                    <select id="numberDifficulty">
+                        <option value="easy">Easy (40% filled)</option>
+                        <option value="medium" selected>Medium (50% filled)</option>
+                        <option value="hard">Hard (60% filled)</option>
+                        <option value="expert">Expert (70% filled)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Number Style:</label>
+                    <select id="numberStyle">
+                        <option value="standard" selected>Standard (1,2,3...)</option>
+                        <option value="roman">Roman Numerals (I,II,III...)</option>
+                        <option value="thai">Thai Numbers (๑,๒,๓...)</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <div class="button-group">
-            <button class="btn-primary" onclick="generatePuzzles()">🎯 Generate Puzzles</button>
-            <button class="btn-secondary" onclick="toggleSolutions()">👁️ Show/Hide Solutions</button>
-            <button class="btn-secondary" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
-            <button class="btn-secondary" onclick="exportToPDF()">📤 Export PDF</button>
-            <button class="btn-secondary" onclick="exportToExcel()">📊 Export Excel</button>
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="generatePuzzles()">🎲 Generate Puzzles</button>
+            <button class="btn btn-success" onclick="toggleSolutions()">👁️ Show/Hide Solutions</button>
+            <button class="btn btn-warning" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
         </div>
 
-        <div id="puzzleContainer" class="puzzle-container"></div>
+        <div class="export-section">
+            <h3>📤 Export Options</h3>
+            <div class="action-buttons">
+                <button class="btn btn-info" onclick="exportToPDF()">📄 Export to PDF (A4)</button>
+                <button class="btn btn-info" onclick="exportToExcel()">📊 Export to Excel</button>
+                <button class="btn btn-info" onclick="printPuzzles()">🖨️ Print</button>
+            </div>
+        </div>
+
+        <div id="puzzlesContainer" class="puzzles-container"></div>
     </div>
 
     <script>
-        class SudokuGenerator {
+        class NumberSudokuGenerator {
             constructor(size) {
                 this.size = size;
                 this.grid = [];
                 this.solution = [];
             }
 
-            generateComplete() {
+            generateNumberSudoku(difficulty) {
                 this.grid = Array(this.size).fill().map(() => Array(this.size).fill(0));
-                this.fillGrid();
-                this.solution = this.grid.map(row => [...row]);
-                return this.grid;
+                
+                if (this.fillGrid()) {
+                    this.solution = this.grid.map(row => [...row]);
+                    this.createPuzzle(difficulty);
+                    return true;
+                }
+                return false;
             }
 
             fillGrid() {
+                return this.solve(0, 0);
+            }
+
+            solve(row, col) {
+                if (row === this.size) return true;
+                if (col === this.size) return this.solve(row + 1, 0);
+                if (this.grid[row][col] !== 0) return this.solve(row, col + 1);
+
                 const numbers = Array.from({length: this.size}, (_, i) => i + 1);
+                const shuffledNumbers = this.shuffleArray(numbers);
                 
-                for (let row = 0; row < this.size; row++) {
-                    for (let col = 0; col < this.size; col++) {
-                        if (this.grid[row][col] === 0) {
-                            const shuffled = this.shuffleArray([...numbers]);
-                            for (let num of shuffled) {
-                                if (this.isValid(row, col, num)) {
-                                    this.grid[row][col] = num;
-                                    if (this.fillGrid()) {
-                                        return true;
-                                    }
-                                    this.grid[row][col] = 0;
-                                }
-                            }
-                            return false;
-                        }
+                for (let num of shuffledNumbers) {
+                    if (this.isValid(row, col, num)) {
+                        this.grid[row][col] = num;
+                        if (this.solve(row, col + 1)) return true;
+                        this.grid[row][col] = 0;
                     }
                 }
-                return true;
+                return false;
             }
 
             isValid(row, col, num) {
                 // Check row
-                for (let x = 0; x < this.size; x++) {
-                    if (this.grid[row][x] === num) return false;
+                for (let c = 0; c < this.size; c++) {
+                    if (this.grid[row][c] === num) return false;
                 }
                 
                 // Check column
-                for (let x = 0; x < this.size; x++) {
-                    if (this.grid[x][col] === num) return false;
+                for (let r = 0; r < this.size; r++) {
+                    if (this.grid[r][col] === num) return false;
                 }
+
+                // Check box
+                const boxSize = this.getBoxSize();
+                const boxRow = Math.floor(row / boxSize.height) * boxSize.height;
+                const boxCol = Math.floor(col / boxSize.width) * boxSize.width;
                 
-                // Check box (simplified for different sizes)
-                const boxSize = Math.sqrt(this.size);
-                if (boxSize === Math.floor(boxSize)) {
-                    const startRow = row - row % boxSize;
-                    const startCol = col - col % boxSize;
-                    
-                    for (let i = 0; i < boxSize; i++) {
-                        for (let j = 0; j < boxSize; j++) {
-                            if (this.grid[i + startRow][j + startCol] === num) return false;
-                        }
+                for (let r = boxRow; r < boxRow + boxSize.height; r++) {
+                    for (let c = boxCol; c < boxCol + boxSize.width; c++) {
+                        if (this.grid[r][c] === num) return false;
                     }
                 }
-                
+
                 return true;
             }
 
-            removeNumbers(difficulty) {
-                const totalCells = this.size * this.size;
-                let cellsToRemove;
-                
-                switch(difficulty) {
-                    case 'easy': cellsToRemove = Math.floor(totalCells * 0.4); break;
-                    case 'medium': cellsToRemove = Math.floor(totalCells * 0.5); break;
-                    case 'hard': cellsToRemove = Math.floor(totalCells * 0.6); break;
-                    case 'expert': cellsToRemove = Math.floor(totalCells * 0.7); break;
-                    default: cellsToRemove = Math.floor(totalCells * 0.5);
+            getBoxSize() {
+                switch (this.size) {
+                    case 4: return { width: 2, height: 2 };
+                    case 6: return { width: 3, height: 2 };
+                    case 9: return { width: 3, height: 3 };
+                    default: return { width: 2, height: 2 };
                 }
+            }
 
+            createPuzzle(difficulty) {
+                const difficultyLevels = {
+                    easy: Math.floor(this.size * this.size * 0.4),
+                    medium: Math.floor(this.size * this.size * 0.5),
+                    hard: Math.floor(this.size * this.size * 0.6),
+                    expert: Math.floor(this.size * this.size * 0.7)
+                };
+
+                const cellsToRemove = difficultyLevels[difficulty];
                 const positions = [];
-                for (let i = 0; i < this.size; i++) {
-                    for (let j = 0; j < this.size; j++) {
-                        positions.push([i, j]);
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        positions.push([r, c]);
                     }
                 }
 
                 const shuffledPositions = this.shuffleArray(positions);
-                
-                for (let i = 0; i < cellsToRemove && i < shuffledPositions.length; i++) {
-                    const [row, col] = shuffledPositions[i];
-                    this.grid[row][col] = 0;
+                for (let i = 0; i < cellsToRemove; i++) {
+                    const [r, c] = shuffledPositions[i];
+                    this.grid[r][c] = 0;
                 }
             }
 
             shuffleArray(array) {
-                const newArray = [...array];
-                for (let i = newArray.length - 1; i > 0; i--) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                return newArray;
+                return shuffled;
             }
         }
 
-        class WordPuzzleGenerator {
+        class WordSudokuGenerator {
             constructor(size) {
                 this.size = size;
                 this.grid = [];
-                this.words = [];
-                this.placedWords = [];
+                this.solution = [];
+                this.word = '';
+                this.letters = [];
             }
 
-            generateWordBank(difficulty) {
-                const wordBanks = {
-                    easy: ['CAT', 'DOG', 'SUN', 'CAR', 'BOX', 'HAT', 'BAT', 'CUP', 'PEN', 'BAG', 'BED', 'EGG', 'FUN', 'GUN', 'HOT', 'ICE', 'JOB', 'KEY', 'LOG', 'MAP', 'NET', 'OWL', 'PIE', 'RAT', 'SEA', 'TOP', 'VAN', 'WIN', 'ZOO'],
-                    medium: ['HOUSE', 'WATER', 'LIGHT', 'MUSIC', 'PLANT', 'BOOKS', 'CHAIR', 'TABLE', 'PHONE', 'SMILE', 'DANCE', 'MAGIC', 'PEACE', 'DREAM', 'SPACE', 'WORLD', 'HAPPY', 'STORY', 'BEACH', 'CLOUD', 'FLOWER', 'FRIEND', 'GARDEN', 'HEART', 'ISLAND', 'JUNGLE', 'KNIGHT', 'LAPTOP', 'MONEY', 'OCEAN'],
-                    hard: ['NATURE', 'GOLDEN', 'STREAM', 'BRIDGE', 'FLOWER', 'GARDEN', 'FOREST', 'CASTLE', 'PLANET', 'DREAMS', 'RAINBOW', 'THUNDER', 'DIAMOND', 'ENGINE', 'FREEDOM', 'GALAXY', 'HARMONY', 'JOURNEY', 'KINGDOM', 'LIBRARY', 'MYSTERY', 'NETWORK', 'SCIENCE', 'VILLAGE', 'VICTORY', 'WISDOM', 'CRYSTAL', 'HORIZON', 'PATTERN', 'BALANCE']
-                };
+            generateWordSudoku(word, difficulty) {
+                this.word = word.toUpperCase();
+                this.letters = [...new Set(this.word.split(''))];
                 
-                return this.shuffleArray(wordBanks[difficulty] || wordBanks.medium);
-            }
-
-            generate(difficulty, customWords = null) {
+                // Pad letters if needed
+                while (this.letters.length < this.size) {
+                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    const availableLetters = alphabet.split('').filter(l => !this.letters.includes(l));
+                    if (availableLetters.length === 0) break;
+                    this.letters.push(availableLetters[Math.floor(Math.random() * availableLetters.length)]);
+                }
+                
+                this.letters = this.letters.slice(0, this.size);
                 this.grid = Array(this.size).fill().map(() => Array(this.size).fill(''));
-                this.placedWords = [];
                 
-                // Get words to use
-                if (customWords && customWords.trim()) {
-                    this.words = customWords.trim().toUpperCase().split('\n').filter(word => word.length > 0);
-                } else {
-                    this.words = this.generateWordBank(difficulty);
+                if (this.fillGrid()) {
+                    this.solution = this.grid.map(row => [...row]);
+                    this.createPuzzle(difficulty);
+                    return true;
                 }
-                
-                // Place words
-                const maxWordsToPlace = Math.min(this.words.length, Math.floor(this.size * 1.5));
-                const wordsToPlace = this.words.slice(0, maxWordsToPlace);
-                
-                for (let word of wordsToPlace) {
-                    this.placeWord(word);
-                }
-                
-                // Fill empty cells with random letters
-                this.fillEmptyCells();
-                
-                return {
-                    grid: this.grid,
-                    words: this.placedWords
-                };
-            }
-
-            placeWord(word) {
-                const directions = [
-                    [0, 1],  // horizontal
-                    [1, 0],  // vertical
-                ];
-                
-                let attempts = 0;
-                const maxAttempts = 100;
-                
-                while (attempts < maxAttempts) {
-                    const direction = directions[Math.floor(Math.random() * directions.length)];
-                    const [dx, dy] = direction;
-                    
-                    const maxRow = this.size - (word.length * Math.abs(dx));
-                    const maxCol = this.size - (word.length * Math.abs(dy));
-                    
-                    if (maxRow < 0 || maxCol < 0) {
-                        attempts++;
-                        continue;
-                    }
-                    
-                    const startRow = Math.floor(Math.random() * (maxRow + 1));
-                    const startCol = Math.floor(Math.random() * (maxCol + 1));
-                    
-                    if (this.canPlaceWord(word, startRow, startCol, dx, dy)) {
-                        this.placeWordAt(word, startRow, startCol, dx, dy);
-                        this.placedWords.push({
-                            word: word,
-                            startRow: startRow,
-                            startCol: startCol,
-                            direction: direction,
-                            positions: this.getWordPositions(word, startRow, startCol, dx, dy)
-                        });
-                        return true;
-                    }
-                    
-                    attempts++;
-                }
-                
                 return false;
             }
 
-            canPlaceWord(word, startRow, startCol, dx, dy) {
-                for (let i = 0; i < word.length; i++) {
-                    const row = startRow + i * dx;
-                    const col = startCol + i * dy;
-                    
-                    if (row < 0 || row >= this.size || col < 0 || col >= this.size) {
-                        return false;
-                    }
-                    
-                    if (this.grid[row][col] !== '' && this.grid[row][col] !== word[i]) {
-                        return false;
+            fillGrid() {
+                return this.solve(0, 0);
+            }
+
+            solve(row, col) {
+                if (row === this.size) return true;
+                if (col === this.size) return this.solve(row + 1, 0);
+                if (this.grid[row][col] !== '') return this.solve(row, col + 1);
+
+                const shuffledLetters = this.shuffleArray([...this.letters]);
+                for (let letter of shuffledLetters) {
+                    if (this.isValid(row, col, letter)) {
+                        this.grid[row][col] = letter;
+                        if (this.solve(row, col + 1)) return true;
+                        this.grid[row][col] = '';
                     }
                 }
+                return false;
+            }
+
+            isValid(row, col, letter) {
+                // Check row
+                for (let c = 0; c < this.size; c++) {
+                    if (this.grid[row][c] === letter) return false;
+                }
+                
+                // Check column
+                for (let r = 0; r < this.size; r++) {
+                    if (this.grid[r][col] === letter) return false;
+                }
+
+                // Check box
+                const boxSize = this.getBoxSize();
+                const boxRow = Math.floor(row / boxSize.height) * boxSize.height;
+                const boxCol = Math.floor(col / boxSize.width) * boxSize.width;
+                
+                for (let r = boxRow; r < boxRow + boxSize.height; r++) {
+                    for (let c = boxCol; c < boxCol + boxSize.width; c++) {
+                        if (this.grid[r][c] === letter) return false;
+                    }
+                }
+
                 return true;
             }
 
-            placeWordAt(word, startRow, startCol, dx, dy) {
-                for (let i = 0; i < word.length; i++) {
-                    const row = startRow + i * dx;
-                    const col = startCol + i * dy;
-                    this.grid[row][col] = word[i];
+            getBoxSize() {
+                switch (this.size) {
+                    case 4: return { width: 2, height: 2 };
+                    case 6: return { width: 3, height: 2 };
+                    case 9: return { width: 3, height: 3 };
+                    default: return { width: 2, height: 2 };
                 }
             }
 
-            getWordPositions(word, startRow, startCol, dx, dy) {
+            createPuzzle(difficulty) {
+                const difficultyLevels = {
+                    easy: Math.floor(this.size * this.size * 0.4),
+                    medium: Math.floor(this.size * this.size * 0.5),
+                    hard: Math.floor(this.size * this.size * 0.6)
+                };
+
+                const cellsToRemove = difficultyLevels[difficulty];
                 const positions = [];
-                for (let i = 0; i < word.length; i++) {
-                    positions.push([startRow + i * dx, startCol + i * dy]);
-                }
-                return positions;
-            }
-
-            fillEmptyCells() {
-                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                for (let i = 0; i < this.size; i++) {
-                    for (let j = 0; j < this.size; j++) {
-                        if (this.grid[i][j] === '') {
-                            this.grid[i][j] = letters[Math.floor(Math.random() * letters.length)];
-                        }
+                for (let r = 0; r < this.size; r++) {
+                    for (let c = 0; c < this.size; c++) {
+                        positions.push([r, c]);
                     }
+                }
+
+                const shuffledPositions = this.shuffleArray(positions);
+                for (let i = 0; i < cellsToRemove; i++) {
+                    const [r, c] = shuffledPositions[i];
+                    this.grid[r][c] = '';
                 }
             }
 
             shuffleArray(array) {
-                const newArray = [...array];
-                for (let i = newArray.length - 1; i > 0; i--) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-                return newArray;
+                return shuffled;
+            }
+
+            getRandomWord(size, difficulty) {
+                const wordLists = {
+                    4: {
+                        easy: ['LOVE', 'HOPE', 'PLAY', 'GAME', 'TIME', 'WIND', 'FIRE', 'MOON', 'STAR', 'BLUE'],
+                        medium: ['JUMP', 'QUIZ', 'ZONE', 'COZY', 'FOXY', 'LAZY', 'MYTH', 'LYNX'],
+                        hard: ['FLUX', 'JINX', 'QUAY', 'WAVY', 'ZEST', 'APEX', 'OXYZ']
+                    },
+                    6: {
+                        easy: ['FRIEND', 'FAMILY', 'SCHOOL', 'GARDEN', 'SIMPLE', 'BRIGHT', 'ANIMAL', 'FLOWER'],
+                        medium: ['PUZZLE', 'JOYFUL', 'WIZARD', 'FROZEN', 'QUIRKY', 'BLAZED', 'MONKEY'],
+                        hard: ['ZEPHYR', 'FJORDS', 'QUARTZ', 'OXYGEN', 'JUXTAP', 'GLYPHS']
+                    },
+                    9: {
+                        easy: ['WONDERFUL', 'BEAUTIFUL', 'FANTASTIC', 'ADVENTURE', 'CELEBRATE', 'KNOWLEDGE'],
+                        medium: ['CLOCKWISE', 'LANDSCAPE', 'BIRTHDAYS', 'CHEMISTRY', 'FRAMEWORK', 'LANGUAGES'],
+                        hard: ['BUZZKILLS', 'HIJACKING', 'PUZZLINGS', 'COMPLEXLY', 'QUIZZICAL', 'MYTHOLOGY']
+                    }
+                };
+
+                const words = wordLists[size]?.[difficulty] || wordLists[6].medium;
+                return words[Math.floor(Math.random() * words.length)];
             }
         }
 
+        // Global variables
         let currentPuzzles = [];
         let showingSolutions = false;
-        let currentMode = 'both';
+        let currentMode = 'wordsudoku';
 
-        // Mode toggle functionality
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentMode = btn.dataset.mode;
-                
-                // Show/hide controls based on mode
-                const sudokuControls = document.querySelector('.sudoku-controls');
-                const wordControls = document.querySelector('.word-controls');
-                
-                if (currentMode === 'sudoku') {
-                    sudokuControls.classList.remove('hidden');
-                    wordControls.classList.add('hidden');
-                } else if (currentMode === 'word') {
-                    sudokuControls.classList.add('hidden');
-                    wordControls.classList.remove('hidden');
-                } else {
-                    sudokuControls.classList.remove('hidden');
-                    wordControls.classList.remove('hidden');
-                }
+        // Number style converters
+        const numberConverters = {
+            standard: (num) => num.toString(),
+            roman: (num) => {
+                const romanNumerals = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+                return romanNumerals[num] || num.toString();
+            },
+            thai: (num) => {
+                const thaiNumbers = ['', '๑', '๒', '๓', '๔', '๕', '๖', '๗', '๘', '๙'];
+                return thaiNumbers[num] || num.toString();
+            }
+        };
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mode button handlers
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentMode = this.dataset.mode;
+                    updateControlVisibility();
+                });
             });
+
+            updateControlVisibility();
+            generatePuzzles();
         });
 
+        function updateControlVisibility() {
+            const wordControls = document.querySelector('.word-sudoku-controls');
+            const numberControls = document.querySelector('.number-sudoku-controls');
+
+            wordControls.style.display = (currentMode === 'wordsudoku' || currentMode === 'both') ? 'block' : 'none';
+            numberControls.style.display = (currentMode === 'numbersudoku' || currentMode === 'both') ? 'block' : 'none';
+        }
+
+        // Word meanings database
+        const wordMeanings = {
+            'LOVE': 'A strong feeling of affection',
+            'HOPE': 'A feeling of expectation',
+            'FRIEND': 'A person you know well and like',
+            'PUZZLE': 'A game or problem to solve',
+            'WIZARD': 'A person with magical powers',
+            'WONDERFUL': 'Extremely good or beautiful',
+            'BEAUTIFUL': 'Pleasing to look at',
+            'CLOCKWISE': 'Moving in the direction of clock hands',
+            'CHEMISTRY': 'The science of matter and its interactions',
+            'ADVENTURE': 'An exciting or unusual experience'
+        };
+
         function generatePuzzles() {
-            const gridSizeSelect = document.getElementById('gridSize');
-            const selectedSizes = Array.from(gridSizeSelect.selectedOptions).map(option => parseInt(option.value));
-            
-            if (selectedSizes.length === 0) {
-                alert('Please select at least one grid size!');
-                return;
-            }
-            
+            const gridSize = parseInt(document.getElementById('gridSize').value);
             const puzzleCount = parseInt(document.getElementById('puzzleCount').value);
-            const sudokuDifficulty = document.getElementById('sudokuDifficulty').value;
             const wordDifficulty = document.getElementById('wordDifficulty').value;
-            const customWords = document.getElementById('customWords').value;
-            
+            const numberDifficulty = document.getElementById('numberDifficulty').value;
+            const customWord = document.getElementById('customWord').value.trim().toUpperCase();
+
             currentPuzzles = [];
-            const container = document.getElementById('puzzleContainer');
-            container.innerHTML = '';
-            
-            let puzzleIndex = 0;
-            
-            // Generate puzzles for each selected size
-            for (let size of selectedSizes) {
-                for (let i = 0; i < puzzleCount; i++) {
-                    if (currentMode === 'sudoku' || currentMode === 'both') {
-                        generateSudoku(size, sudokuDifficulty, puzzleIndex);
-                        puzzleIndex++;
-                    }
-                    if (currentMode === 'word' || currentMode === 'both') {
-                        generateWordSearch(size, wordDifficulty, customWords, puzzleIndex);
-                        puzzleIndex++;
-                    }
-                }
-            }
-        }
+            showingSolutions = false;
 
-        function generateSudoku(size, difficulty, index) {
-            const sudoku = new SudokuGenerator(size);
-            sudoku.generateComplete();
-            sudoku.removeNumbers(difficulty);
-            
-            const puzzle = {
-                type: 'sudoku',
-                size: size,
-                grid: sudoku.grid.map(row => [...row]),
-                solution: sudoku.solution.map(row => [...row]),
-                difficulty: difficulty,
-                index: index
-            };
-            
-            currentPuzzles.push(puzzle);
-            renderPuzzle(puzzle);
-        }
-
-        function generateWordSearch(size, difficulty, customWords, index) {
-            const wordGen = new WordPuzzleGenerator(size);
-            const result = wordGen.generate(difficulty, customWords);
-            
-            const puzzle = {
-                type: 'wordsearch',
-                size: size,
-                grid: result.grid.map(row => [...row]),
-                words: result.words,
-                difficulty: difficulty,
-                index: index
-            };
-            
-            currentPuzzles.push(puzzle);
-            renderPuzzle(puzzle);
-        }
-
-        function renderPuzzle(puzzle) {
-            const container = document.getElementById('puzzleContainer');
-            const puzzleCard = document.createElement('div');
-            puzzleCard.className = 'puzzle-card';
-            puzzleCard.id = `puzzle-${puzzle.type}-${puzzle.index}`;
-            
-            const header = document.createElement('div');
-            header.className = 'puzzle-header';
-            
-            const title = document.createElement('h3');
-            title.className = 'puzzle-title';
-            title.textContent = puzzle.type === 'sudoku' ? `🔢 Sudoku ${puzzle.size}×${puzzle.size}` : `📝 Word Search ${puzzle.size}×${puzzle.size}`;
-            
-            const difficultyLabel = document.createElement('p');
-            difficultyLabel.className = 'puzzle-difficulty';
-            difficultyLabel.textContent = `Difficulty: ${puzzle.difficulty.charAt(0).toUpperCase() + puzzle.difficulty.slice(1)}`;
-            
-            header.appendChild(title);
-            header.appendChild(difficultyLabel);
-            
-            const grid = document.createElement('div');
-            grid.className = `grid grid-${puzzle.size}x${puzzle.size}`;
-            
-            for (let i = 0; i < puzzle.size; i++) {
-                for (let j = 0; j < puzzle.size; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.dataset.row = i;
-                    cell.dataset.col = j;
+            for (let i = 0; i < puzzleCount; i++) {
+                if (currentMode === 'wordsudoku' || currentMode === 'both') {
+                    const generator = new WordSudokuGenerator(gridSize);
+                    let word;
                     
-                    if (puzzle.type === 'sudoku') {
-                        cell.textContent = puzzle.grid[i][j] || '';
+                    if (customWord && customWord.length <= gridSize) {
+                        word = customWord;
                     } else {
-                        cell.textContent = puzzle.grid[i][j];
+                        word = generator.getRandomWord(gridSize, wordDifficulty);
                     }
-                    
-                    grid.appendChild(cell);
+
+                    let attempts = 0;
+                    while (attempts < 10) {
+                        if (generator.generateWordSudoku(word, wordDifficulty)) {
+                            currentPuzzles.push({
+                                type: 'wordsudoku',
+                                puzzle: generator.grid.map(row => [...row]),
+                                solution: generator.solution,
+                                word: word,
+                                letters: generator.letters,
+                                difficulty: wordDifficulty,
+                                size: gridSize,
+                                meaning: wordMeanings[word] || 'Complete the puzzle using these letters'
+                            });
+                            break;
+                        }
+                        attempts++;
+                        word = generator.getRandomWord(gridSize, wordDifficulty);
+                    }
+                }
+
+                if (currentMode === 'numbersudoku' || currentMode === 'both') {
+                    const generator = new NumberSudokuGenerator(gridSize);
+                    let attempts = 0;
+                    while (attempts < 10) {
+                        if (generator.generateNumberSudoku(numberDifficulty)) {
+                            currentPuzzles.push({
+                                type: 'numbersudoku',
+                                puzzle: generator.grid.map(row => [...row]),
+                                solution: generator.solution,
+                                difficulty: numberDifficulty,
+                                size: gridSize
+                            });
+                            break;
+                        }
+                        attempts++;
+                    }
                 }
             }
+
+            displayPuzzles();
+        }
+
+        function displayPuzzles() {
+            const container = document.getElementById('puzzlesContainer');
+            container.innerHTML = '';
+
+            currentPuzzles.forEach((puzzle, index) => {
+                const puzzleCard = document.createElement('div');
+                puzzleCard.className = 'puzzle-card';
+                
+                if (puzzle.type === 'wordsudoku') {
+                    puzzleCard.innerHTML = createWordSudokuHTML(puzzle, index);
+                } else if (puzzle.type === 'numbersudoku') {
+                    puzzleCard.innerHTML = createNumberSudokuHTML(puzzle, index);
+                }
+                
+                container.appendChild(puzzleCard);
+            });
+        }
+
+        function createNumberSudokuHTML(puzzle, index) {
+            const numberStyle = document.getElementById('numberStyle').value;
+            const converter = numberConverters[numberStyle];
             
-            puzzleCard.appendChild(header);
-            puzzleCard.appendChild(grid);
-            
-            // Add word list for word search
-            if (puzzle.type === 'wordsearch') {
-                const wordList = document.createElement('div');
-                wordList.className = 'word-list';
+            const tableRows = puzzle.puzzle.map((row, r) => {
+                const cells = row.map((cell, c) => {
+                    let value = '';
+                    if (showingSolutions) {
+                        value = converter(puzzle.solution[r][c]);
+                    } else if (cell !== 0) {
+                        value = converter(cell);
+                    }
+                    
+                    const cellClass = cell === 0 ? 
+                        (showingSolutions ? 'solution-cell' : 'empty-cell') : 
+                        'given-cell';
+                    
+                    return `<td class="${cellClass}">${value}</td>`;
+                }).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            const numbersUsed = Array.from({length: puzzle.size}, (_, i) => i + 1);
+            const numbersHTML = numbersUsed.map(num => 
+                `<span class="number-item">${converter(num)}</span>`
+            ).join('');
+
+            const styleName = {
+                standard: 'Standard Numbers',
+                roman: 'Roman Numerals',
+                thai: 'Thai Numbers'
+            };
+
+            return `
+                <div class="puzzle-title">🔢 Number Sudoku #${index + 1}</div>
+                <div class="puzzle-difficulty">Difficulty: ${puzzle.difficulty} | Size: ${puzzle.size}×${puzzle.size} | Style: ${styleName[numberStyle]}</div>
                 
-                const wordTitle = document.createElement('h4');
-                wordTitle.textContent = 'Words to Find:';
+                <div class="number-display">
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #ff6b6b; margin-bottom: 5px;">
+                        Number Sudoku Challenge
+                    </div>
+                    <div style="font-size: 1rem; color: #555;">
+                        Fill each row, column, and box with unique numbers
+                    </div>
+                </div>
                 
-                const words = document.createElement('div');
-                words.className = 'words';
+                <div class="puzzle-grid">
+                    <table class="sudoku-table grid-${puzzle.size}x${puzzle.size}">
+                        ${tableRows}
+                    </table>
+                </div>
                 
-                puzzle.words.forEach(wordObj => {
-                    const wordItem = document.createElement('span');
-                    wordItem.className = 'word-item';
-                    wordItem.textContent = wordObj.word;
-                    words.appendChild(wordItem);
-                });
+                <div class="numbers-used">
+                    <h4>Numbers to use:</h4>
+                    <div class="number-list">${numbersHTML}</div>
+                </div>
+            `;
+        }
+
+        function createWordSudokuHTML(puzzle, index) {
+            const tableRows = puzzle.puzzle.map((row, r) => {
+                const cells = row.map((cell, c) => {
+                    const value = showingSolutions ? puzzle.solution[r][c] : cell;
+                    const cellClass = cell === '' ? 
+                        (showingSolutions ? 'solution-cell' : 'empty-cell') : 
+                        'given-cell';
+                    
+                    return `<td class="${cellClass}">${value}</td>`;
+                }).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+
+            const lettersHTML = puzzle.letters.map(letter => 
+                `<span class="letter-item">${letter}</span>`
+            ).join('');
+
+            return `
+                <div class="puzzle-title">🔤 Word Sudoku #${index + 1}</div>
+                <div class="puzzle-difficulty">Difficulty: ${puzzle.difficulty} | Size: ${puzzle.size}×${puzzle.size}</div>
                 
-                wordList.appendChild(wordTitle);
-                wordList.appendChild(words);
-                puzzleCard.appendChild(wordList);
+                <div class="word-display">
+                    <div class="target-word">${puzzle.word}</div>
+                    <div class="word-meaning">${puzzle.meaning}</div>
+                </div>
+                
+                <div class="puzzle-grid">
+                    <table class="sudoku-table grid-${puzzle.size}x${puzzle.size}">
+                        ${tableRows}
+                    </table>
+                </div>
+                
+                <div class="letters-used">
+                    <h4>Letters to use:</h4>
+                    <div class="letter-list">${lettersHTML}</div>
+                </div>
+            `;
+        }
+
+        function getBoxSize(size) {
+            switch (size) {
+                case 4: return { width: 2, height: 2 };
+                case 6: return { width: 3, height: 2 };
+                case 9: return { width: 3, height: 3 };
+                default: return { width: 2, height: 2 };
             }
-            
-            container.appendChild(puzzleCard);
         }
 
         function toggleSolutions() {
             showingSolutions = !showingSolutions;
-            
-            currentPuzzles.forEach(puzzle => {
-                const puzzleElement = document.getElementById(`puzzle-${puzzle.type}-${puzzle.index}`);
-                const cells = puzzleElement.querySelectorAll('.grid-cell');
-                
-                if (puzzle.type === 'sudoku') {
-                    cells.forEach(cell => {
-                        const row = parseInt(cell.dataset.row);
-                        const col = parseInt(cell.dataset.col);
-                        
-                        if (showingSolutions) {
-                            cell.textContent = puzzle.solution[row][col];
-                            if (puzzle.grid[row][col] === 0) {
-                                cell.classList.add('solution');
-                            }
-                        } else {
-                            cell.textContent = puzzle.grid[row][col] || '';
-                            cell.classList.remove('solution');
-                        }
-                    });
-                } else if (puzzle.type === 'wordsearch') {
-                    cells.forEach(cell => {
-                        const row = parseInt(cell.dataset.row);
-                        const col = parseInt(cell.dataset.col);
-                        
-                        if (showingSolutions) {
-                            let isPartOfWord = false;
-                            puzzle.words.forEach(wordObj => {
-                                wordObj.positions.forEach(pos => {
-                                    if (pos[0] === row && pos[1] === col) {
-                                        isPartOfWord = true;
-                                    }
-                                });
-                            });
-                            
-                            if (isPartOfWord) {
-                                cell.classList.add('word-solution');
-                            }
-                        } else {
-                            cell.classList.remove('word-solution');
-                        }
-                    });
-                }
-            });
+            displayPuzzles();
         }
 
         function copyToClipboard() {
-            const container = document.getElementById('puzzleContainer');
-            const text = container.innerText;
-            
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Puzzles copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-            });
+            const container = document.getElementById('puzzlesContainer');
+            const range = document.createRange();
+            range.selectNode(container);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            alert('Sudoku puzzles copied to clipboard!');
+        }
+
+        function printPuzzles() {
+            window.print();
         }
 
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF('p', 'mm', 'a4');
             
             doc.setFontSize(20);
-            doc.text('Puzzle Generator', 20, 20);
+            doc.text('Sudoku Collection', 105, 20, { align: 'center' });
             
-            let yPosition = 40;
+            let yPosition = 35;
+            const numberStyle = document.getElementById('numberStyle').value;
+            const converter = numberConverters[numberStyle];
             
             currentPuzzles.forEach((puzzle, index) => {
-                if (yPosition > 250) {
+                if (yPosition > 200) {
                     doc.addPage();
                     yPosition = 20;
                 }
                 
+                // Title
                 doc.setFontSize(16);
-                const title = puzzle.type === 'sudoku' ? 'Sudoku' : 'Word Search';
-                doc.text(`${title} - ${puzzle.difficulty}`, 20, yPosition);
+                const title = puzzle.type === 'wordsudoku' ? 
+                    `Word Sudoku #${index + 1}` : 
+                    `Number Sudoku #${index + 1}`;
+                doc.text(title, 105, yPosition, { align: 'center' });
+                yPosition += 8;
+                
+                // Word and meaning (only for word sudoku)
+                if (puzzle.type === 'wordsudoku') {
+                    doc.setFontSize(14);
+                    doc.text(`Word: ${puzzle.word}`, 105, yPosition, { align: 'center' });
+                    yPosition += 6;
+                    doc.setFontSize(10);
+                    doc.text(puzzle.meaning, 105, yPosition, { align: 'center' });
+                    yPosition += 10;
+                } else {
+                    doc.setFontSize(12);
+                    doc.text(`Difficulty: ${puzzle.difficulty}`, 105, yPosition, { align: 'center' });
+                    yPosition += 10;
+                }
+                
+                // Grid
+                const cellSize = puzzle.size === 9 ? 15 : (puzzle.size === 6 ? 20 : 25);
+                const startX = 105 - (puzzle.size * cellSize) / 2;
+                const startY = yPosition;
+                
+                const boxSize = getBoxSize(puzzle.size);
+                
+                for (let r = 0; r < puzzle.size; r++) {
+                    for (let c = 0; c < puzzle.size; c++) {
+                        const x = startX + c * cellSize;
+                        const y = startY + r * cellSize;
+                        
+                        // Draw cell
+                        doc.rect(x, y, cellSize, cellSize);
+                        
+                        // Add thicker lines for boxes
+                        if ((c + 1) % boxSize.width === 0 && c < puzzle.size - 1) {
+                            doc.setLineWidth(1);
+                            doc.line(x + cellSize, y, x + cellSize, y + cellSize);
+                            doc.setLineWidth(0.2);
+                        }
+                        if ((r + 1) % boxSize.height === 0 && r < puzzle.size - 1) {
+                            doc.setLineWidth(1);
+                            doc.line(x, y + cellSize, x + cellSize, y + cellSize);
+                            doc.setLineWidth(0.2);
+                        }
+                        
+                        // Add content
+                        let cellValue = '';
+                        if (puzzle.type === 'wordsudoku') {
+                            cellValue = puzzle.puzzle[r][c];
+                        } else {
+                            cellValue = puzzle.puzzle[r][c] === 0 ? '' : converter(puzzle.puzzle[r][c]);
+                        }
+                        
+                        if (cellValue) {
+                            doc.setFontSize(12);
+                            doc.text(cellValue, x + cellSize/2, y + cellSize/2 + 2, { align: 'center' });
+                        }
+                    }
+                }
+                
+                yPosition += puzzle.size * cellSize + 15;
+                
+                // Add items to use
+                if (puzzle.type === 'wordsudoku') {
+                    doc.setFontSize(10);
+                    doc.text(`Letters to use: ${puzzle.letters.join(', ')}`, 105, yPosition, { align: 'center' });
+                } else {
+                    const numbers = Array.from({length: puzzle.size}, (_, i) => converter(i + 1));
+                    doc.text(`Numbers to use: ${numbers.join(', ')}`, 105, yPosition, { align: 'center' });
+                }
+                yPosition += 10;
+                
+                // Add solution if showing
+                if (showingSolutions) {
+                    doc.text('Solution:', 105, yPosition, { align: 'center' });
+                    yPosition += 8;
+                    
+                    for (let r = 0; r < puzzle.size; r++) {
+                        for (let c = 0; c < puzzle.size; c++) {
+                            const x = startX + c * cellSize;
+                            const y = yPosition + r * cellSize;
+                            
+                            doc.rect(x, y, cellSize, cellSize);
+                            doc.setTextColor(255, 0, 0); // Red for solution
+                            doc.setFontSize(12);
+                            
+                            let solutionValue = '';
+                            if (puzzle.type === 'wordsudoku') {
+                                solutionValue = puzzle.solution[r][c];
+                            } else {
+                                solutionValue = converter(puzzle.solution[r][c]);
+                            }
+                            
+                            doc.text(solutionValue, x + cellSize/2, y + cellSize/2 + 2, { align: 'center' });
+                            doc.setTextColor(0, 0, 0); // Reset to black
+                        }
+                    }
+                    
+                    yPosition += puzzle.size * cellSize + 15;
+                }
+                
                 yPosition += 20;
             });
             
-            doc.save('puzzles.pdf');
+            doc.save('sudoku-puzzles.pdf');
         }
 
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
+            const numberStyle = document.getElementById('numberStyle').value;
+            const converter = numberConverters[numberStyle];
             
             currentPuzzles.forEach((puzzle, index) => {
                 const wsData = [];
                 
-                // Add title
-                wsData.push([puzzle.type === 'sudoku' ? 'Sudoku' : 'Word Search']);
-                wsData.push([`Difficulty: ${puzzle.difficulty}`]);
-                wsData.push([]);
-                
-                // Add grid
-                for (let i = 0; i < puzzle.size; i++) {
-                    const row = [];
-                    for (let j = 0; j < puzzle.size; j++) {
-                        if (puzzle.type === 'sudoku') {
-                            row.push(puzzle.grid[i][j] || '');
-                        } else {
-                            row.push(puzzle.grid[i][j]);
-                        }
-                    }
-                    wsData.push(row);
-                }
-                
-                if (puzzle.type === 'wordsearch') {
+                if (puzzle.type === 'wordsudoku') {
+                    wsData.push([`Word Sudoku #${index + 1}`]);
+                    wsData.push([`Word: ${puzzle.word}`]);
+                    wsData.push([`Meaning: ${puzzle.meaning}`]);
+                    wsData.push([`Difficulty: ${puzzle.difficulty}`]);
                     wsData.push([]);
-                    wsData.push(['Words to find:']);
-                    puzzle.words.forEach(wordObj => {
-                        wsData.push([wordObj.word]);
-                    });
+                    wsData.push(['Puzzle:']);
+                    
+                    // Add puzzle grid
+                    for (let r = 0; r < puzzle.size; r++) {
+                        const row = [];
+                        for (let c = 0; c < puzzle.size; c++) {
+                            row.push(puzzle.puzzle[r][c] || '');
+                        }
+                        wsData.push(row);
+                    }
+                    
+                    wsData.push([]);
+                    wsData.push(['Solution:']);
+                    
+                    // Add solution grid
+                    for (let r = 0; r < puzzle.size; r++) {
+                        const row = [];
+                        for (let c = 0; c < puzzle.size; c++) {
+                            row.push(puzzle.solution[r][c]);
+                        }
+                        wsData.push(row);
+                    }
+                    
+                    wsData.push([]);
+                    wsData.push([`Letters to use: ${puzzle.letters.join(', ')}`]);
+                    
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+                    XLSX.utils.book_append_sheet(wb, ws, `WordSudoku${index + 1}`);
+                    
+                } else if (puzzle.type === 'numbersudoku') {
+                    wsData.push([`Number Sudoku #${index + 1}`]);
+                    wsData.push([`Difficulty: ${puzzle.difficulty}`]);
+                    wsData.push([`Style: ${numberStyle}`]);
+                    wsData.push([]);
+                    wsData.push(['Puzzle:']);
+                    
+                    // Add puzzle grid
+                    for (let r = 0; r < puzzle.size; r++) {
+                        const row = [];
+                        for (let c = 0; c < puzzle.size; c++) {
+                            row.push(puzzle.puzzle[r][c] === 0 ? '' : converter(puzzle.puzzle[r][c]));
+                        }
+                        wsData.push(row);
+                    }
+                    
+                    wsData.push([]);
+                    wsData.push(['Solution:']);
+                    
+                    // Add solution grid
+                    for (let r = 0; r < puzzle.size; r++) {
+                        const row = [];
+                        for (let c = 0; c < puzzle.size; c++) {
+                            row.push(converter(puzzle.solution[r][c]));
+                        }
+                        wsData.push(row);
+                    }
+                    
+                    wsData.push([]);
+                    const numbers = Array.from({length: puzzle.size}, (_, i) => converter(i + 1));
+                    wsData.push([`Numbers to use: ${numbers.join(', ')}`]);
+                    
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+                    XLSX.utils.book_append_sheet(wb, ws, `NumberSudoku${index + 1}`);
                 }
-                
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                const sheetName = `${puzzle.type}_${index + 1}`;
-                XLSX.utils.book_append_sheet(wb, ws, sheetName);
             });
             
-            XLSX.writeFile(wb, 'puzzles.xlsx');
+            XLSX.writeFile(wb, 'sudoku-puzzles.xlsx');
         }
 
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set initial mode
-            currentMode = 'both';
-            
-            // Generate initial puzzles
+        // Initialize with demo puzzles
+        document.addEventListener('DOMContentLoaded', function() {
             generatePuzzles();
         });
     </script>
 </body>
-</html>    
-                // Add grid representation
-                for (let i = 0; i < puzzle.size; i++) {
-                    let rowText = '';
-                    for (let j = 0; j < puzzle.size; j++) {
-                        if (puzzle.type === 'sudoku') {
-                            rowText += (puzzle.grid[i][j] || '_') + ' ';
-                        } else {
-                            rowText += puzzle.grid[i][j] + ' ';
-                        }
-                    }
-                    doc.setFontSize(12);
-                    doc.text(rowText, 20, yPosition);
-                    yPosition += 10;
-                }
-                
-                if (puzzle.type === 'wordsearch') {
-                    yPosition += 10;
-                    doc.text('Words to find:', 20, yPosition);
-                    yPosition += 10;
-                    const wordsText = puzzle.words.map(w => w.word).join(', ');
-                    doc.text(wordsText, 20, yPosition);
-                    yPosition += 15;
-                }
-                
-                yPosition += 20;
+</html>
